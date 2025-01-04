@@ -1,6 +1,6 @@
-# Özer Programlama Dili
+# OgLang Programlama Dili
 
-Özer, basit ve öğrenmesi kolay bir programlama dilidir. Statik tip sistemine sahip ve modern programlama dillerinin temel özelliklerini içerir.
+OgLang, basit ve öğrenmesi kolay bir programlama dilidir. Statik tip sistemine sahip ve modern programlama dillerinin temel özelliklerini içerir.
 
 ## Özellikler
 
@@ -18,14 +18,14 @@
 
 ### Fonksiyon Tanımlama
 
-```ozer
+```oglang
 fn fonksiyon_adi(parametre: tip) -> donus_tipi {
     // fonksiyon gövdesi
 }
 ```
 
 Örnek:
-```ozer
+```oglang
 fn factorial(n: number) -> number {
     if (n > 1) {
         n * factorial(n - 1)
@@ -38,24 +38,24 @@ fn factorial(n: number) -> number {
 ### Değişken Tanımlama
 
 Değişmez (immutable) değişken:
-```ozer
+```oglang
 let x = 5
 ```
 
 Değişebilir (mutable) değişken:
-```ozer
+```oglang
 mut y = 10
 ```
 
 Tip belirterek:
-```ozer
+```oglang
 let x: number = 5
 mut y: string = "merhaba"
 ```
 
 ### Koşullu İfadeler
 
-```ozer
+```oglang
 if (kosul) {
     // doğru ise çalışacak kod
 } else {
@@ -66,7 +66,7 @@ if (kosul) {
 ### Döngüler
 
 While döngüsü:
-```ozer
+```oglang
 while (kosul) {
     // döngü gövdesi
 }
@@ -90,7 +90,7 @@ while (kosul) {
 
 ## Örnek Program
 
-```ozer
+```oglang
 fn factorial(n: number) -> number {
     if (n > 1) {
         n * factorial(n - 1)
@@ -104,6 +104,10 @@ fn main() -> number {
     return x
 }
 ```
+
+## Dosya Uzantısı
+
+OgLang programları `.oglang` uzantısı ile kaydedilir. Örneğin: `program.oglang`
 
 ## Çalıştırma
 

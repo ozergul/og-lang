@@ -72,14 +72,14 @@ async function runFile(filename) {
 
 // Ana fonksiyon
 async function main() {
-  const filename = process.argv[2];
-  if (!filename) {
+  const sourceFile = process.argv[2] || "test.oglang";
+  if (!sourceFile) {
     console.error("Lütfen bir dosya adı belirtin!");
     console.log("Kullanım: node runner.js <dosya_adı>");
     process.exit(1);
   }
 
-  await runFile(filename);
+  await runFile(sourceFile);
 }
 
 // Programı çalıştır
