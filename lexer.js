@@ -95,6 +95,9 @@ class Lexer {
       "new": TokenType.NEW,
       "this": TokenType.THIS,
       "static": TokenType.STATIC,
+      "true": TokenType.TRUE,
+      "false": TokenType.FALSE,
+      "nil": TokenType.NIL
     };
   }
 
@@ -191,6 +194,12 @@ class Lexer {
       // Boşlukları atla
       if (/\s/.test(this.currentChar)) {
         this.skipWhitespace();
+        continue;
+      }
+
+      // Yorum satırlarını atla
+      if (this.currentChar === '/' && this.input[this.position + 1] === '/') {
+        this.skipComment();
         continue;
       }
 
@@ -342,5 +351,16 @@ class Lexer {
     }
     tokens.push(token);
     return tokens;
+  }
+
+  skipComment() {
+    // İlk iki slash'ı atla
+    this.advance();
+    this.advance();
+
+    // Satır sonuna kadar ilerle
+    while (this.currentChar !== null && this.currentChar !== '\n') {
+      this.advance();
+    }
   }
 }

@@ -1,0 +1,42 @@
+class Fibonacci {
+    fn recursive(n: number) -> number {
+        if (n <= 1) {
+            return n;
+        }
+        return this.recursive(n - 1) + this.recursive(n - 2);
+    }
+
+    fn iterative(n: number) -> number {
+        if (n <= 1) {
+            return n;
+        }
+
+        let prev: number = 0;
+        let current: number = 1;
+        let i: number = 2;
+
+        while (i <= n) {
+            let next = prev + current;
+            prev = current;
+            current = next;
+            i = i + 1;
+        }
+
+        return current;
+    }
+}
+
+fn main() -> number {
+    let fib = new Fibonacci();
+    
+    // İlk 10 Fibonacci sayısını hesapla
+    let i: number = 0;
+    while (i < 10) {
+        let recursive = fib.recursive(i);
+        let iterative = fib.iterative(i);
+        i = i + 1;
+    }
+    
+    // 10. Fibonacci sayısını döndür
+    return fib.iterative(10);
+} 

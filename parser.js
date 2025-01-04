@@ -187,6 +187,8 @@ export class Parser {
     const init = this.parseExpression();
     console.log("parseVariableDeclaration - Got init:", init);
 
+    this.expect(TokenType.SEMICOLON, 'Expected ";" after variable declaration');
+
     const varDecl = new VariableDeclaration(name, type, mutable, init);
     console.log("parseVariableDeclaration - Created node:", varDecl);
     return varDecl;
@@ -217,6 +219,7 @@ export class Parser {
 
   parseExpressionStatement() {
     const expr = this.parseExpression();
+    this.expect(TokenType.SEMICOLON, 'Expected ";" after expression statement');
     return new ExpressionStatement(expr);
   }
 
@@ -273,6 +276,7 @@ export class Parser {
   // ReturnStmt = "return" Expression?
   parseReturnStatement() {
     const value = this.parseExpression();
+    this.expect(TokenType.SEMICOLON, 'Expected ";" after return statement');
     return new ReturnStatement(value);
   }
 
@@ -537,6 +541,7 @@ export class Parser {
       init = this.parseExpression();
     }
 
+    this.expect(TokenType.SEMICOLON, 'Expected ";" after property declaration');
     return new PropertyDeclaration(name, type, isStatic, init);
   }
 }

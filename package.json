@@ -1,8 +1,17 @@
 {
-  "name": "compiler",
+  "name": "oglang",
   "version": "1.0.0",
+  "description": "OgLang Programming Language",
   "type": "module",
   "scripts": {
-    "run-test-file": "node runner.js test.oglang"
-  }
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run-test-file": "node runner.js test.oglang",
+    "run-calculator": "node runner.js examples/calculatorClass.oglang",
+    "run-fibonacci": "node runner.js examples/fibonacci.oglang",
+    "run-string-utils": "node runner.js examples/stringUtils.oglang",
+    "run-examples": "pnpm run run-calculator && pnpm run run-fibonacci && pnpm run run-string-utils"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

@@ -1,0 +1,47 @@
+class StringUtils {
+    fn concat(str1: string, str2: string) -> string {
+        return str1 + str2;
+    }
+
+    fn repeat(str: string, count: number) -> string {
+        let result: string = "";
+        let i: number = 0;
+        
+        while (i < count) {
+            result = result + str;
+            i = i + 1;
+        }
+        
+        return result;
+    }
+
+    fn countDigits(str: string) -> number {
+        let count: number = 0;
+        let i: number = 0;
+        
+        while (i < str.length) {
+            let char = str[i];
+            if (char >= "0" && char <= "9") {
+                count = count + 1;
+            }
+            i = i + 1;
+        }
+        
+        return count;
+    }
+}
+
+fn main() -> number {
+    let utils = new StringUtils();
+    
+    // String birleştirme
+    let combined = utils.concat("Hello, ", "World!");
+    
+    // String tekrarlama
+    let repeated = utils.repeat("Ha", 3);
+    
+    // Rakam sayma
+    let digitCount = utils.countDigits("abc123def456");
+    
+    return digitCount;
+} 

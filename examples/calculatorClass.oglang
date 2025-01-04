@@ -1,0 +1,43 @@
+class Calculator {
+    result: number = 0;
+
+    fn add(x: number) -> number {
+        this.result = this.result + x;
+        return this.result;
+    }
+
+    fn subtract(x: number) -> number {
+        this.result = this.result - x;
+        return this.result;
+    }
+
+    fn multiply(x: number) -> number {
+        this.result = this.result * x;
+        return this.result;
+    }
+
+    fn divide(x: number) -> number {
+        this.result = this.result / x;
+        return this.result;
+    }
+
+    static fn pi() -> number {
+        return 3.14159;
+    }
+}
+
+fn main() -> number {
+    let calc = new Calculator();
+    
+    // Hesaplama: (10 + 5) * 2 / 3 - 4
+    let result = calc.add(10);
+    result = calc.add(5);
+    result = calc.multiply(2);
+    result = calc.divide(3);
+    result = calc.subtract(4);
+    
+    // Pi sayısını al
+    let pi = Calculator.pi();
+    
+    return result;
+} 
