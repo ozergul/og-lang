@@ -52,20 +52,18 @@ function generateClassDeclaration(decl) {
   let code = `class ${decl.name} {\n`;
   
   // Constructor
-  if (decl.properties.length > 0) {
-    code += "  constructor() {\n";
-    for (const prop of decl.properties) {
-      code += `    this.${prop.name} = ${prop.init ? generateExpression(prop.init) : 'null'};\n`;
-    }
-    code += "  }\n\n";
+  code += "  constructor() {\n";
+  for (const prop of decl.properties) {
+    code += `    this.${prop.name} = ${prop.init ? generateExpression(prop.init) : 'null'};\n`;
   }
+  code += "  }\n\n";
   
   // Methods
   for (const method of decl.methods) {
     code += generateMethodDeclaration(method);
   }
   
-  code += "}\n";
+  code += "}\n\n";
   return code;
 }
 
@@ -161,9 +159,17 @@ function generateWhileStatement(stmt) {
 }
 
 function generateVariableDeclaration(decl) {
-  const mutabilityKeyword = decl.mutable ? 'let' : 'const';
+  // Eğer değişken daha sonra değiştirilecekse veya mutable olarak tanımlanmışsa let kullan
+  const keyword = decl.mutable || isReassigned(decl.name) ? 'let' : 'const';
   const initValue = generateExpression(decl.init);
-  return `${mutabilityKeyword} ${decl.name} = ${initValue};`;
+  return `${keyword} ${decl.name} = ${initValue};`;
+}
+
+// Bir değişkenin daha sonra değiştirilip değiştirilmediğini kontrol et
+function isReassigned(varName) {
+  // Şimdilik tüm değişkenleri mutable kabul et
+  // TODO: Gerçek analiz eklenecek
+  return true;
 }
 
 function generateExpression(expr) {
