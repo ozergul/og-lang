@@ -21,7 +21,7 @@ class StringUtils {
   concat(str1, str2) {
     _runtime.checkType(str1, "string");
     _runtime.checkType(str2, "string");
-    return (str1 + str2);
+    return _runtime.checkType((str1 + str2), "string");
   }
 
   repeat(str, count) {
@@ -33,7 +33,7 @@ class StringUtils {
   result = (result + str);
   i = (i + 1);
 }
-    return result;
+    return _runtime.checkType(result, "string");
   }
 
   countDigits(str) {
@@ -47,7 +47,7 @@ class StringUtils {
 }
   i = (i + 1);
 }
-    return count;
+    return _runtime.checkType(count, "number");
   }
 
 }
@@ -57,7 +57,7 @@ function main() {
   let combined = utils.concat("Hello, ", "World!");
   let repeated = utils.repeat("Ha", 3);
   let digitCount = utils.countDigits("abc123def456");
-  return digitCount;
+  return _runtime.checkType(digitCount, "number");
 }
 
 

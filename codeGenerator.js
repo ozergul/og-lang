@@ -68,6 +68,7 @@ function generateClassDeclaration(decl) {
 }
 
 function generateMethodDeclaration(method) {
+  currentFunction = method;  // Set current function
   let code = "  ";
   if (method.isStatic) code += "static ";
   code += `${method.name}(${method.params.map(p => p.name).join(", ")}) {\n`;
@@ -83,10 +84,12 @@ function generateMethodDeclaration(method) {
   }
   
   code += "  }\n\n";
+  currentFunction = null;  // Reset current function
   return code;
 }
 
 function generateFunctionDeclaration(decl) {
+  currentFunction = decl;  // Set current function
   let code = `function ${decl.name}(${decl.params.map(p => p.name).join(", ")}) {\n`;
   
   // Add parameter type checks
@@ -100,6 +103,7 @@ function generateFunctionDeclaration(decl) {
   }
   
   code += "}\n";
+  currentFunction = null;  // Reset current function
   return code;
 }
 
@@ -112,7 +116,8 @@ function generateStatement(stmt) {
     case 'WhileStatement':
       return generateWhileStatement(stmt);
     case 'ReturnStatement':
-      return `return ${generateExpression(stmt.value)};`;
+      // Add runtime type checking for return values
+      return `return _runtime.checkType(${generateExpression(stmt.value)}, "${currentFunction.returnType}");`;
     case 'ExpressionStatement':
       return generateExpression(stmt.expression) + ";";
     case 'VariableDeclaration':
@@ -220,3 +225,6 @@ function generatePropertyExpression(expr) {
   }
   return `${generateExpression(expr.object)}.${expr.property.value}`;
 }
+
+// Track current function's return type
+let currentFunction = null;
