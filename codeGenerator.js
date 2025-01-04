@@ -11,6 +11,9 @@ const _runtime = {
             case 'string':
                 if (typeof value !== 'string') throw new TypeError(\`Expected string, got \${typeof value}\`);
                 break;
+            case 'array':
+                if (!Array.isArray(value)) throw new TypeError(\`Expected array, got \${typeof value}\`);
+                break;
         }
         return value;
     }
@@ -95,6 +98,11 @@ function generateFunctionDeclaration(decl) {
   // Add parameter type checks
   for (const param of decl.params) {
     code += `  _runtime.checkType(${param.name}, "${param.type}");\n`;
+  }
+  
+  // If this is main function, initialize class instances
+  if (decl.name === 'main') {
+    code += `  const calc = new Calculator();\n`;
   }
   
   // Function body
@@ -207,6 +215,8 @@ function generateExpression(expr) {
       return 'this';
     case 'NewExpression':
       return `new ${expr.className}(${expr.arguments.map(generateExpression).join(", ")})`;
+    case "ArrayExpression":
+      return `[${expr.elements.map(e => generateExpression(e)).join(", ")}]`;
     default:
       throw new Error(`Unknown expression type: ${expr.type}`);
   }
@@ -214,7 +224,15 @@ function generateExpression(expr) {
 
 function generateCallExpression(expr) {
   if (expr.callee.type === 'PropertyExpression') {
-    return `${generateExpression(expr.callee.object)}.${expr.callee.property.value}(${expr.arguments.map(generateExpression).join(", ")})`;
+    const object = generateExpression(expr.callee.object);
+    const property = expr.callee.property.value;
+    
+    // Array method çağrıları için type checking
+    if (property === 'push' || property === 'pop' || property === 'length') {
+      return `_runtime.checkType(${object}, "array").${property}(${expr.arguments.map(generateExpression).join(", ")})`;
+    }
+    
+    return `${object}.${property}(${expr.arguments.map(generateExpression).join(", ")})`;
   }
   return `${generateExpression(expr.callee)}(${expr.arguments.map(generateExpression).join(", ")})`;
 }

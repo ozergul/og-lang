@@ -25,6 +25,8 @@ import {
   PropertyDeclaration,
   ThisExpression,
   NewExpression,
+  ArrayExpression,
+  GroupingExpression,
 } from "./ast.js";
 
 export class Parser {
@@ -462,21 +464,23 @@ export class Parser {
     if (this.match(TokenType.NUMBER)) {
       return new NumberLiteral(this.previous().value);
     }
+    
     if (this.match(TokenType.STRING)) {
       return new StringLiteral(this.previous().value);
     }
+    
     if (this.match(TokenType.TRUE)) {
       return new BooleanLiteral(true);
     }
+    
     if (this.match(TokenType.FALSE)) {
       return new BooleanLiteral(false);
     }
+    
     if (this.match(TokenType.NIL)) {
       return new NullLiteral();
     }
-    if (this.match(TokenType.THIS)) {
-      return new ThisExpression();
-    }
+    
     if (this.match(TokenType.NEW)) {
       const className = this.expect(TokenType.IDENTIFIER, "Expected class name after 'new'").value;
       this.expect(TokenType.LPAREN, "Expected '(' after class name");
@@ -489,15 +493,47 @@ export class Parser {
       }
       return new NewExpression(className, args);
     }
+    
+    if (this.match(TokenType.LBRACKET)) {
+      const elements = [];
+      if (!this.match(TokenType.RBRACKET)) {
+        do {
+          elements.push(this.parseExpression());
+        } while (this.match(TokenType.COMMA));
+        this.expect(TokenType.RBRACKET, "Expected ']' after array elements");
+      }
+      return new ArrayExpression(elements);
+    }
+    
     if (this.match(TokenType.IDENTIFIER)) {
       return new Identifier(this.previous().value);
     }
+    
     if (this.match(TokenType.LPAREN)) {
       const expr = this.parseExpression();
       this.expect(TokenType.RPAREN, "Expected ')' after expression");
-      return expr;
+      return new GroupingExpression(expr);
     }
+    
+    throw new Error(`Unexpected token: ${this.peek().type}`);
+  }
 
-    throw new Error(`Unexpected token: ${this.peek().type} at line ${this.peek().line}`);
+  parsePostfix() {
+    let expr = this.parsePrimary();
+    
+    while (true) {
+      if (this.match(TokenType.LBRACKET)) {
+        const index = this.parseExpression();
+        this.expect(TokenType.RBRACKET, "Expected ']' after array index");
+        expr = new ArrayAccessExpression(expr, index);
+      } else if (this.match(TokenType.DOT)) {
+        const property = this.expect(TokenType.IDENTIFIER, "Expected property name after '.'").value;
+        expr = new PropertyExpression(expr, property);
+      } else {
+        break;
+      }
+    }
+    
+    return expr;
   }
 }

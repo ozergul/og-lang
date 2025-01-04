@@ -1,63 +1,105 @@
 class ArrayUtils {
-    fn sum(arr: string) -> number {
+    // Create a new array with initial elements
+    fn create(first: number, second: number) -> array {
+        let arr: array = [first, second];
+        return arr;
+    }
+    
+    // Add an element to the end of array
+    fn append(arr: array, element: number) -> array {
+        arr.push(element);
+        return arr;
+    }
+    
+    // Remove last element from array
+    fn removeLast(arr: array) -> array {
+        arr.pop();
+        return arr;
+    }
+    
+    // Get element at index
+    fn getAt(arr: array, index: number) -> number {
+        return arr[index];
+    }
+    
+    // Set element at index
+    fn setAt(arr: array, index: number, value: number) -> array {
+        arr[index] = value;
+        return arr;
+    }
+    
+    // Get array length
+    fn length(arr: array) -> number {
+        return arr.length;
+    }
+    
+    // Sum all elements in array
+    fn sum(arr: array) -> number {
         let total: number = 0;
         let i: number = 0;
         
         while (i < arr.length) {
-            let char = arr[i];
-            if (char >= "0" && char <= "9") {
-                total = total + 1;
-            }
+            total = total + arr[i];
             i = i + 1;
         }
         
         return total;
     }
     
-    fn findMax(str: string) -> number {
-        let max: number = 0;
-        let current: number = 0;
-        let i: number = 0;
+    // Find maximum element in array
+    fn findMax(arr: array) -> number {
+        if (arr.length == 0) {
+            return 0;
+        }
         
-        while (i < str.length) {
-            let char = str[i];
-            if (char >= "0" && char <= "9") {
-                if (char - "0" > max) {
-                    max = char - "0";
-                }
+        let max: number = arr[0];
+        let i: number = 1;
+        
+        while (i < arr.length) {
+            if (arr[i] > max) {
+                max = arr[i];
             }
             i = i + 1;
         }
         
         return max;
     }
-    
-    fn countOccurrences(str: string, target: string) -> number {
-        let count: number = 0;
-        let i: number = 0;
-        
-        while (i < str.length) {
-            if (str[i] == target) {
-                count = count + 1;
-            }
-            i = i + 1;
-        }
-        
-        return count;
-    }
 }
 
 fn main() -> number {
     let utils = new ArrayUtils();
     
-    // Test verileri
-    let numbers = "12345";
-    let text = "hello world";
+    // Create a new array with [10, 20]
+    let arr = utils.create(10, 20);
+    print("Created array:", arr);
     
-    // Array işlemleri
-    let sum = utils.sum(numbers);
-    let max = utils.findMax(numbers);
-    let occurrences = utils.countOccurrences(text, "l");
+    // Add 30 to end: [10, 20, 30]
+    arr = utils.append(arr, 30);
+    print("After append:", arr);
     
-    return max;  // 5 döndürmeli
+    // Set element at index 1 to 25: [10, 25, 30]
+    arr = utils.setAt(arr, 1, 25);
+    print("After setAt:", arr);
+    
+    // Get element at index 1 (should be 25)
+    let element = utils.getAt(arr, 1);
+    print("Element at index 1:", element);
+    
+    // Remove last element: [10, 25]
+    arr = utils.removeLast(arr);
+    print("After removeLast:", arr);
+    
+    // Get array length (should be 2)
+    let len = utils.length(arr);
+    print("Array length:", len);
+    
+    // Calculate sum of elements (should be 35)
+    let total = utils.sum(arr);
+    print("Sum of elements:", total);
+    
+    // Find maximum element (should be 25)
+    let max = utils.findMax(arr);
+    print("Maximum element:", max);
+    
+    return max;
 } 
