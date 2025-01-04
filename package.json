@@ -13,7 +13,12 @@
     "run-functions": "node runner.js examples/functions.oglang",
     "run-examples": "make run-examples",
     "clean": "make clean",
-    "test": "node tests/codeGenerator.test.js"
+    "test": "node tests/codeGenerator.test.js",
+    "start-server": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   },
   "keywords": [
     "programming-language",

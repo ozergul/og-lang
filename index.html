@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OG Lang Playground</title>
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <!-- CodeMirror for editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            gap: 20px;
+        }
+        .editor-container, .output-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 10px 15px;
+            background-color: #363636;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .CodeMirror {
+            height: 100% !important;
+            font-size: 14px;
+        }
+        .output-content {
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            flex: 1;
+        }
+        button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #106ebe;
+        }
+        .error {
+            color: #ff6b6b;
+        }
+        .success {
+            color: #69db7c;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const defaultCode = `// Write your OG Lang code here
+class Calculator {
+    // Properties must have type annotations
+    result: number;
+
+    add(x: number) -> number {
+        this.result = this.result + x;
+        return this.result;
+    }
+
+    multiply(x: number) -> number {
+        this.result = this.result * x;
+        return this.result;
+    }
+}
+
+function main() -> number {
+    let calc = new Calculator();
+    calc.result = 0;
+    let res = calc.add(5);
+    res = calc.multiply(2);
+    return res;
+}`;
+
+        function Playground() {
+            const [code, setCode] = useState(defaultCode);
+            const [output, setOutput] = useState('');
+            const editorRef = useRef(null);
+            const cmRef = useRef(null);
+
+            useEffect(() => {
+                if (editorRef.current && !cmRef.current) {
+                    cmRef.current = CodeMirror(editorRef.current, {
+                        value: code,
+                        mode: 'javascript',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        matchBrackets: true,
+                        tabSize: 4,
+                        indentUnit: 4,
+                        lineWrapping: true,
+                    });
+
+                    cmRef.current.on('change', (cm) => {
+                        setCode(cm.getValue());
+                    });
+                }
+            }, []);
+
+            const compileCode = async () => {
+                try {
+                    const response = await fetch('http://localhost:3000/compile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ code })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (!result.success) {
+                        setOutput(`Compilation Error:\n${result.error}\n\nStack Trace:\n${result.stack}`);
+                        return;
+                    }
+
+                    const output = [
+                        '// Tokens:',
+                        JSON.stringify(result.tokens, null, 2),
+                        '\n// AST:',
+                        JSON.stringify(result.ast, null, 2),
+                        '\n// Compiled JavaScript:',
+                        result.compiledCode
+                    ].join('\n');
+
+                    setOutput(output);
+                } catch (error) {
+                    setOutput(`Error: ${error.message}`);
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="editor-container">
+                        <div className="panel-header">
+                            <span>OG Lang Editor</span>
+                            <button onClick={compileCode}>Compile</button>
+                        </div>
+                        <div ref={editorRef} style={{ flex: 1 }} />
+                    </div>
+                    <div className="output-container">
+                        <div className="panel-header">
+                            <span>Compiled Output</span>
+                        </div>
+                        <div className="output-content">
+                            {output || 'Compiled code will appear here...'}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Playground />);
+    </script>
+</body>
+</html> 

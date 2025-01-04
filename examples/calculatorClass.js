@@ -49,13 +49,13 @@ class Calculator {
 }
 
 function main() {
-  let calc = new Calculator();
-  let result = calc.add(10);
+  const calc = new Calculator();
+  const result = calc.add(10);
   result = calc.add(5);
   result = calc.multiply(2);
   result = calc.divide(3);
   result = calc.subtract(4);
-  let pi = Calculator.pi();
+  const pi = Calculator.pi();
   return _runtime.checkType(result, "number");
 }
 
