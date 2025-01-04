@@ -6,7 +6,60 @@ fn factorial(n: number) -> number {
     }
 }
 
+fn fibonacci(n: number) -> number {
+    if (n <= 1) {
+        n
+    } else {
+        fibonacci(n - 1) + fibonacci(n - 2)
+    }
+}
+
+fn power(base: number, exp: number) -> number {
+    if (exp == 0) {
+        1
+    } else {
+        base * power(base, exp - 1)
+    }
+}
+
+fn greet(name: string) -> string {
+    "Merhaba, " + name + "!"
+}
+
+fn calculate(a: number, b: number, op: string) -> number {
+    if (op == "+") {
+        a + b
+    } else {
+        if (op == "-") {
+            a - b
+        } else {
+            if (op == "*") {
+                a * b
+            } else {
+                if (op == "/") {
+                    a / b
+                } else {
+                    0
+                }
+            }
+        }
+    }
+}
+
 fn main() -> number {
-    let x = factorial(5)
-    return x
+    let name = "OgLang"
+    let greeting = greet(name)
+    
+    let fact5 = factorial(5)
+    let fib6 = fibonacci(6)
+    let pow2_3 = power(2, 3)
+    
+    let sum = calculate(10, 5, "+")
+    let diff = calculate(10, 5, "-")
+    let prod = calculate(10, 5, "*")
+    let quot = calculate(10, 5, "/")
+    
+    let result = fact5 + fib6 + pow2_3 + sum + diff + prod + quot
+    
+    return result
 }
