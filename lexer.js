@@ -2,7 +2,7 @@ export { Lexer, TokenType, Token };
 
 // tokenTypes.js
 const TokenType = {
-  // Anahtar kelimeler
+  // Keywords
   LET: "LET",
   MUT: "MUT",
   FN: "FN",
@@ -18,7 +18,7 @@ const TokenType = {
   FALSE: "FALSE",
   NIL: "NIL",
 
-  // Operatörler
+  // Operators
   PLUS: "PLUS", // +
   MINUS: "MINUS", // -
   MULTIPLY: "MULTIPLY", // *
@@ -35,7 +35,7 @@ const TokenType = {
   BANG_EQUAL: "BANG_EQUAL", // !=
   ARROW: "ARROW", // ->
 
-  // Ayraçlar
+  // Delimiters
   LPAREN: "LPAREN", // (
   RPAREN: "RPAREN", // )
   LBRACE: "LBRACE", // {
@@ -47,7 +47,7 @@ const TokenType = {
   COMMA: "COMMA", // ,
   DOT: "DOT", // .
 
-  // Literals ve diğerleri
+  // Literals and others
   IDENTIFIER: "IDENTIFIER",
   NUMBER: "NUMBER",
   STRING: "STRING",
@@ -201,34 +201,34 @@ class Lexer {
 
   getNextToken() {
     while (this.currentChar !== null) {
-      // Boşlukları atla
+      // Skip whitespace
       if (/\s/.test(this.currentChar)) {
         this.skipWhitespace();
         continue;
       }
 
-      // Yorum satırlarını atla
+      // Skip comments
       if (this.currentChar === '/' && this.input[this.position + 1] === '/') {
         this.skipComment();
         continue;
       }
 
-      // Sayılar
+      // Numbers
       if (/\d/.test(this.currentChar)) {
         return this.number();
       }
 
-      // Tanımlayıcılar ve anahtar kelimeler
+      // Identifiers and keywords
       if (/[a-zA-Z_]/.test(this.currentChar)) {
         return this.identifier();
       }
 
-      // String'ler
+      // Strings
       if (this.currentChar === '"' || this.currentChar === "'") {
         return this.string();
       }
 
-      // Operatörler ve ayraçlar
+      // Operators and delimiters
       switch (this.currentChar) {
         case "+":
           this.advance();

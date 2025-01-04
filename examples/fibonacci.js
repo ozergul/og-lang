@@ -14,26 +14,19 @@ const _runtime = {
     }
 };
 
-class MathUtils {
+class Fibonacci {
   constructor() {
   }
 
-  isPrime(n) {
+  recursive(n) {
     _runtime.checkType(n, "number");
     if ((n <= 1)) {
-  return 0;
+  return n;
 }
-    let i = 2;
-    while (((i * i) <= n)) {
-  if (((n - ((n / i) * i)) == 0)) {
-  return 0;
-}
-  i = (i + 1);
-}
-    return 1;
+    return (this.recursive((n - 1)) + this.recursive((n - 2)));
   }
 
-  fibonacci(n) {
+  iterative(n) {
     _runtime.checkType(n, "number");
     if ((n <= 1)) {
   return n;
@@ -42,7 +35,7 @@ class MathUtils {
     let current = 1;
     let i = 2;
     while ((i <= n)) {
-  let next = (current + prev);
+  let next = (prev + current);
   prev = current;
   current = next;
   i = (i + 1);
@@ -50,25 +43,17 @@ class MathUtils {
     return current;
   }
 
-  gcd(a, b) {
-    _runtime.checkType(a, "number");
-    _runtime.checkType(b, "number");
-    while ((b != 0)) {
-  let temp = b;
-  b = (a - ((a / b) * b));
-  a = temp;
-}
-    return a;
-  }
-
 }
 
 function main() {
-  let math = new MathUtils();
-  let prime = math.isPrime(17);
-  let fib6 = math.fibonacci(6);
-  let gcd_result = math.gcd(48, 18);
-  return fib6;
+  let fib = new Fibonacci();
+  let i = 0;
+  while ((i < 10)) {
+  let recursive = fib.recursive(i);
+  let iterative = fib.iterative(i);
+  i = (i + 1);
+}
+  return fib.iterative(10);
 }
 
 

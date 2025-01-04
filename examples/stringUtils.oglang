@@ -34,13 +34,13 @@ class StringUtils {
 fn main() -> number {
     let utils = new StringUtils();
     
-    // String birleştirme
+    // String concatenation
     let combined = utils.concat("Hello, ", "World!");
     
-    // String tekrarlama
+    // String repetition
     let repeated = utils.repeat("Ha", 3);
     
-    // Rakam sayma
+    // Count digits
     let digitCount = utils.countDigits("abc123def456");
     
     return digitCount;

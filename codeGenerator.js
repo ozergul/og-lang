@@ -1,7 +1,7 @@
 // codeGenerator.js
 export function generateCode(ast) {
   let code = `
-// Runtime kütüphanesi
+// Runtime library
 const _runtime = {
     checkType: function(value, type) {
         switch(type) {
@@ -18,12 +18,12 @@ const _runtime = {
 
 `;
 
-  // AST'yi JavaScript koduna dönüştür
+  // Convert AST to JavaScript code
   for (const decl of ast.declarations) {
     code += generateDeclaration(decl) + "\n";
   }
 
-  // Main fonksiyonunu export et
+  // Export main function
   code += "\nexport { main };\n";
 
   return code;
@@ -72,7 +72,7 @@ function generateMethodDeclaration(method) {
   if (method.isStatic) code += "static ";
   code += `${method.name}(${method.params.map(p => p.name).join(", ")}) {\n`;
   
-  // Parametre tip kontrollerini ekle
+  // Add parameter type checks
   for (const param of method.params) {
     code += `    _runtime.checkType(${param.name}, "${param.type}");\n`;
   }
@@ -89,7 +89,7 @@ function generateMethodDeclaration(method) {
 function generateFunctionDeclaration(decl) {
   let code = `function ${decl.name}(${decl.params.map(p => p.name).join(", ")}) {\n`;
   
-  // Parametre tip kontrollerini ekle
+  // Add parameter type checks
   for (const param of decl.params) {
     code += `  _runtime.checkType(${param.name}, "${param.type}");\n`;
   }
@@ -159,16 +159,16 @@ function generateWhileStatement(stmt) {
 }
 
 function generateVariableDeclaration(decl) {
-  // Eğer değişken daha sonra değiştirilecekse veya mutable olarak tanımlanmışsa let kullan
+  // Use let if the variable will be modified later or is declared as mutable
   const keyword = decl.mutable || isReassigned(decl.name) ? 'let' : 'const';
   const initValue = generateExpression(decl.init);
   return `${keyword} ${decl.name} = ${initValue};`;
 }
 
-// Bir değişkenin daha sonra değiştirilip değiştirilmediğini kontrol et
+// Check if a variable is reassigned later
 function isReassigned(varName) {
-  // Şimdilik tüm değişkenleri mutable kabul et
-  // TODO: Gerçek analiz eklenecek
+  // For now, consider all variables as mutable
+  // TODO: Add real analysis
   return true;
 }
 

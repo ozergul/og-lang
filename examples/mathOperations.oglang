@@ -37,7 +37,7 @@ class MathUtils {
     fn gcd(a: number, b: number) -> number {
         while (b != 0) {
             let temp = b;
-            b = a - (a / b) * b;  // a % b
+            b = a - (a / b) * b;  // a % b (modulo operation)
             a = temp;
         }
         return a;
@@ -52,5 +52,5 @@ fn main() -> number {
     let fib6 = math.fibonacci(6);      // 8
     let gcd_result = math.gcd(48, 18); // 6
     
-    return fib6;  // 8 döndürmeli
+    return fib6;  // should return 8
 } 

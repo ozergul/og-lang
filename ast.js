@@ -180,11 +180,19 @@ class TypeAnnotation extends AST {
   }
 }
 
-// Array ve object literal desteği
+// Array and object literal support
 class ArrayExpression extends AST {
   constructor(elements) {
     super("ArrayExpression");
     this.elements = elements;
+  }
+}
+
+class ArrayAccessExpression extends AST {
+  constructor(array, index) {
+    super("ArrayAccessExpression");
+    this.array = array;
+    this.index = index;
   }
 }
 
@@ -245,14 +253,6 @@ class NewExpression extends AST {
     super("NewExpression");
     this.className = className;
     this.arguments = args;
-  }
-}
-
-class ArrayAccessExpression extends AST {
-  constructor(array, index) {
-    super("ArrayAccessExpression");
-    this.array = array;
-    this.index = index;
   }
 }
 

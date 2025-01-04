@@ -7,14 +7,14 @@ import { generateCode } from './codeGenerator.js';
 
 async function runFile(filePath) {
   try {
-    // 1. Kaynak kodu oku
+    // 1. Read source code
     const sourceCode = await fs.readFile(filePath, 'utf8');
-    console.log("Kaynak kod:");
+    console.log("Source code:");
     console.log(sourceCode);
     console.log("-----------------\n");
 
-    // 2. Lexical analiz
-    console.log("1. Lexical Analiz başlıyor...");
+    // 2. Lexical analysis
+    console.log("1. Starting Lexical Analysis...");
     const lexer = new Lexer(sourceCode);
     const tokens = [];
     let token;
@@ -23,41 +23,41 @@ async function runFile(filePath) {
       tokens.push(token);
     } while (token.type !== TokenType.EOF);
 
-    console.log("Token'lar:");
-    tokens.forEach(t => console.log(`${t.type}: ${t.value} (satır: ${t.line}, sütun: ${t.column})`));
+    console.log("Tokens:");
+    tokens.forEach(t => console.log(`${t.type}: ${t.value} (line: ${t.line}, column: ${t.column})`));
     console.log();
 
     // 3. Parsing
-    console.log("2. Parsing başlıyor...");
+    console.log("2. Starting Parsing...");
     const parser = new Parser(tokens);
     const ast = parser.parse();
-    console.log("AST yapısı:");
+    console.log("AST structure:");
     console.log(JSON.stringify(ast, null, 2));
     console.log();
 
-    // 4. JavaScript kodu üret
-    console.log("3. JavaScript kodu üretiliyor...");
+    // 4. Generate JavaScript code
+    console.log("3. Generating JavaScript code...");
     const jsCode = generateCode(ast);
-    console.log("\nÜretilen JavaScript kodu:");
+    console.log("\nGenerated JavaScript code:");
     console.log("------------------------");
     console.log(jsCode);
     console.log("------------------------\n");
 
-    // 5. JavaScript dosyasını kaydet
+    // 5. Save JavaScript file
     const jsFilePath = filePath.replace('.oglang', '.js');
     await fs.writeFile(jsFilePath, jsCode);
-    console.log(`JavaScript kodu '${jsFilePath}' dosyasına kaydedildi.\n`);
+    console.log(`JavaScript code saved to '${jsFilePath}'\n`);
 
-    // 6. JavaScript kodunu çalıştır
-    console.log("4. Kod çalıştırılıyor...");
+    // 6. Run JavaScript code
+    console.log("4. Running code...");
     const module = await import(url.pathToFileURL(jsFilePath));
     if (typeof module.main === 'function') {
       const result = module.main();
-      console.log("Sonuç:", result);
+      console.log("Result:", result);
     }
 
   } catch (error) {
-    console.error("Hata:", error);
+    console.error("Error:", error);
     console.error("\nStack trace:", error);
     process.exit(1);
   }
@@ -66,7 +66,7 @@ async function runFile(filePath) {
 async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
-    console.error('Lütfen bir .oglang dosyası belirtin.');
+    console.error('Please specify a .oglang file.');
     process.exit(1);
   }
 

@@ -1,15 +1,28 @@
 {
   "name": "oglang",
   "version": "1.0.0",
-  "description": "OgLang Programming Language",
+  "description": "OgLang - A Statically Typed Programming Language",
   "type": "module",
   "scripts": {
     "run-calculator": "node runner.js examples/calculatorClass.oglang",
     "run-fibonacci": "node runner.js examples/fibonacci.oglang",
     "run-string-utils": "node runner.js examples/stringUtils.oglang",
-    "run-examples": "pnpm run run-calculator && pnpm run run-fibonacci && pnpm run run-string-utils"
+    "run-array-operations": "node runner.js examples/arrayOperations.oglang",
+    "run-math-operations": "node runner.js examples/mathOperations.oglang",
+    "run-text-processing": "node runner.js examples/textProcessing.oglang",
+    "run-functions": "node runner.js examples/functions.oglang",
+    "run-examples": "make run-examples",
+    "clean": "make clean"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "programming-language",
+    "compiler",
+    "static-typing",
+    "javascript",
+    "ast",
+    "parser",
+    "lexer"
+  ],
+  "author": "Özer Gül",
+  "license": "MIT"
 }

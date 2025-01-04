@@ -1,9 +1,9 @@
 .PHONY: all clean run-examples
 
-# Tüm örnekleri çalıştır
+# Run all examples
 all: clean run-examples
 
-# Örnekleri çalıştır
+# Run examples
 run-examples: clean
 	@echo "Running Calculator Example..."
 	node runner.js examples/calculatorClass.oglang
@@ -20,12 +20,12 @@ run-examples: clean
 	@echo "\nRunning Fibonacci Example..."
 	node runner.js examples/fibonacci.oglang
 
-# Tek bir örneği çalıştır
+# Run a single example
 run-%: clean
 	@echo "Running $* Example..."
 	node runner.js examples/$*.oglang
 
-# Oluşturulan JS dosyalarını temizle
+# Clean generated JS files
 clean:
 	@echo "Cleaning generated JS files..."
 	@rm -f examples/*.js 
