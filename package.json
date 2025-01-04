@@ -12,7 +12,8 @@
     "run-text-processing": "node runner.js examples/textProcessing.oglang",
     "run-functions": "node runner.js examples/functions.oglang",
     "run-examples": "make run-examples",
-    "clean": "make clean"
+    "clean": "make clean",
+    "test": "node tests/codeGenerator.test.js"
   },
   "keywords": [
     "programming-language",

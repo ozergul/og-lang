@@ -192,9 +192,8 @@ function generateVariableDeclaration(decl) {
 
 // Check if a variable is reassigned later
 function isReassigned(varName) {
-  // For now, consider all variables as mutable
-  // TODO: Add real analysis
-  return true;
+    // Return false to respect the mutable flag in variable declarations
+    return false;
 }
 
 function generateExpression(expr) {
