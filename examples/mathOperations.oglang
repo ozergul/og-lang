@@ -1,0 +1,56 @@
+class MathUtils {
+    fn isPrime(n: number) -> number {
+        if (n <= 1) {
+            return 0;  // false
+        }
+        
+        let i: number = 2;
+        while (i * i <= n) {
+            if (n - (n / i) * i == 0) {
+                return 0;  // false
+            }
+            i = i + 1;
+        }
+        
+        return 1;  // true
+    }
+    
+    fn fibonacci(n: number) -> number {
+        if (n <= 1) {
+            return n;
+        }
+        
+        let prev: number = 0;
+        let current: number = 1;
+        let i: number = 2;
+        
+        while (i <= n) {
+            let next = current + prev;
+            prev = current;
+            current = next;
+            i = i + 1;
+        }
+        
+        return current;
+    }
+    
+    fn gcd(a: number, b: number) -> number {
+        while (b != 0) {
+            let temp = b;
+            b = a - (a / b) * b;  // a % b
+            a = temp;
+        }
+        return a;
+    }
+}
+
+fn main() -> number {
+    let math = new MathUtils();
+    
+    // Test calculations
+    let prime = math.isPrime(17);      // 1 (true)
+    let fib6 = math.fibonacci(6);      // 8
+    let gcd_result = math.gcd(48, 18); // 6
+    
+    return fib6;  // 8 döndürmeli
+} 

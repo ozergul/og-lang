@@ -1,0 +1,54 @@
+class TextProcessor {
+    fn countWords(text: string) -> number {
+        let count: number = 1;  // En az 1 kelime var
+        let i: number = 0;
+        
+        while (i < text.length) {
+            if (text[i] == " ") {
+                count = count + 1;
+            }
+            i = i + 1;
+        }
+        
+        return count;
+    }
+    
+    fn countVowels(text: string) -> number {
+        let count: number = 0;
+        let i: number = 0;
+        
+        while (i < text.length) {
+            let char = text[i];
+            if (char == "a" || char == "e" || char == "i" || char == "o" || char == "u") {
+                count = count + 1;
+            }
+            i = i + 1;
+        }
+        
+        return count;
+    }
+    
+    fn reverse(text: string) -> string {
+        let result: string = "";
+        let i: number = text.length;
+        
+        while (i > 0) {
+            i = i - 1;
+            result = result + text[i];
+        }
+        
+        return result;
+    }
+}
+
+fn main() -> number {
+    let processor = new TextProcessor();
+    let text = "hello world";
+    
+    // Text işlemleri
+    let wordCount = processor.countWords(text);    // 2
+    let vowelCount = processor.countVowels(text);  // 3
+    let reversed = processor.reverse(text);        // "dlrow olleh"
+    
+    return wordCount;  // 2 döndürmeli
+} 

@@ -1,0 +1,63 @@
+class ArrayUtils {
+    fn sum(arr: string) -> number {
+        let total: number = 0;
+        let i: number = 0;
+        
+        while (i < arr.length) {
+            let char = arr[i];
+            if (char >= "0" && char <= "9") {
+                total = total + 1;
+            }
+            i = i + 1;
+        }
+        
+        return total;
+    }
+    
+    fn findMax(str: string) -> number {
+        let max: number = 0;
+        let current: number = 0;
+        let i: number = 0;
+        
+        while (i < str.length) {
+            let char = str[i];
+            if (char >= "0" && char <= "9") {
+                if (char - "0" > max) {
+                    max = char - "0";
+                }
+            }
+            i = i + 1;
+        }
+        
+        return max;
+    }
+    
+    fn countOccurrences(str: string, target: string) -> number {
+        let count: number = 0;
+        let i: number = 0;
+        
+        while (i < str.length) {
+            if (str[i] == target) {
+                count = count + 1;
+            }
+            i = i + 1;
+        }
+        
+        return count;
+    }
+}
+
+fn main() -> number {
+    let utils = new ArrayUtils();
+    
+    // Test verileri
+    let numbers = "12345";
+    let text = "hello world";
+    
+    // Array işlemleri
+    let sum = utils.sum(numbers);
+    let max = utils.findMax(numbers);
+    let occurrences = utils.countOccurrences(text, "l");
+    
+    return max;  // 5 döndürmeli
+} 
