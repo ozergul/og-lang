@@ -205,6 +205,8 @@ function generateExpression(expr) {
       return `(${generateExpression(expr.left)} ${expr.operator} ${generateExpression(expr.right)})`;
     case 'UnaryOperation':
       return `(${expr.operator}${generateExpression(expr.operand)})`;
+    case 'GroupingExpression':
+      return generateExpression(expr.expression);
     case 'CallExpression':
       return generateCallExpression(expr);
     case 'PropertyExpression':
@@ -241,8 +243,9 @@ function generateCallExpression(expr) {
     const property = expr.callee.property.value;
     
     // Array method çağrıları için type checking
-    if (property === 'push' || property === 'pop' || property === 'length') {
-      return `_runtime.checkType(${object}, "array").${property}(${expr.arguments.map(generateExpression).join(", ")})`;
+    if (property === 'push' || property === 'pop') {
+      // push ve pop metodları array döndürür
+      return `(${object}.${property}(${expr.arguments.map(generateExpression).join(", ")}), ${object})`;
     }
     
     return `${object}.${property}(${expr.arguments.map(generateExpression).join(", ")})`;
