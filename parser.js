@@ -431,6 +431,9 @@ export class Parser {
 
     while (true) {
       if (this.match(TokenType.LPAREN)) {
+        if (expr instanceof Identifier && expr.value === 'print') {
+          expr = new Identifier('console.log');
+        }
         expr = this.finishCall(expr);
       } else if (this.match(TokenType.DOT)) {
         const name = this.expect(TokenType.IDENTIFIER, "Expected property name after '.'").value;

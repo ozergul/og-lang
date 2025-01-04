@@ -86,6 +86,15 @@ function generateMethodDeclaration(method) {
     code += "    " + generateStatement(stmt) + "\n";
   }
   
+  // If no explicit return in the body, add return this.result for non-static methods
+  if (!method.body.some(stmt => stmt.type === 'ReturnStatement')) {
+    if (method.isStatic) {
+      code += `    return undefined;\n`;
+    } else {
+      code += `    return this.result;\n`;
+    }
+  }
+  
   code += "  }\n\n";
   currentFunction = null;  // Reset current function
   return code;
@@ -98,11 +107,6 @@ function generateFunctionDeclaration(decl) {
   // Add parameter type checks
   for (const param of decl.params) {
     code += `  _runtime.checkType(${param.name}, "${param.type}");\n`;
-  }
-  
-  // If this is main function, initialize class instances
-  if (decl.name === 'main') {
-    code += `  const calc = new Calculator();\n`;
   }
   
   // Function body
@@ -124,8 +128,10 @@ function generateStatement(stmt) {
     case 'WhileStatement':
       return generateWhileStatement(stmt);
     case 'ReturnStatement':
-      // Add runtime type checking for return values
-      return `return _runtime.checkType(${generateExpression(stmt.value)}, "${currentFunction.returnType}");`;
+      if (currentFunction && currentFunction.returnType) {
+        return `return _runtime.checkType(${generateExpression(stmt.value)}, "${currentFunction.returnType}");`;
+      }
+      return `return ${generateExpression(stmt.value)};`;
     case 'ExpressionStatement':
       return generateExpression(stmt.expression) + ";";
     case 'VariableDeclaration':
@@ -172,9 +178,15 @@ function generateWhileStatement(stmt) {
 }
 
 function generateVariableDeclaration(decl) {
-  // Use let if the variable will be modified later or is declared as mutable
   const keyword = decl.mutable || isReassigned(decl.name) ? 'let' : 'const';
-  const initValue = generateExpression(decl.init);
+  let initValue = generateExpression(decl.init);
+  
+  // If it's a class instance creation, ensure proper initialization
+  if (decl.init && decl.init.type === 'NewExpression') {
+    const args = decl.init.arguments ? decl.init.arguments.map(generateExpression).join(", ") : "";
+    initValue = `new ${decl.init.className}(${args})`;
+  }
+  
   return `${keyword} ${decl.name} = ${initValue};`;
 }
 
@@ -214,7 +226,8 @@ function generateExpression(expr) {
     case 'ThisExpression':
       return 'this';
     case 'NewExpression':
-      return `new ${expr.className}(${expr.arguments.map(generateExpression).join(", ")})`;
+      const args = expr.arguments ? expr.arguments.map(generateExpression).join(", ") : "";
+      return `new ${expr.className}(${args})`;
     case "ArrayExpression":
       return `[${expr.elements.map(e => generateExpression(e)).join(", ")}]`;
     default:

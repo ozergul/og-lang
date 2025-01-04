@@ -24,18 +24,22 @@ class Calculator {
 
   add(x) {
     _runtime.checkType(x, "number");
+    return this.result;
   }
 
   subtract(x) {
     _runtime.checkType(x, "number");
+    return this.result;
   }
 
   multiply(x) {
     _runtime.checkType(x, "number");
+    return this.result;
   }
 
   divide(x) {
     _runtime.checkType(x, "number");
+    return this.result;
   }
 
   static pi() {
@@ -45,6 +49,7 @@ class Calculator {
 }
 
 function main() {
+  let calc = new Calculator();
   let result = calc.add(10);
   result = calc.add(5);
   result = calc.multiply(2);
