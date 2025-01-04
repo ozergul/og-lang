@@ -248,6 +248,14 @@ class NewExpression extends AST {
   }
 }
 
+class ArrayAccessExpression extends AST {
+  constructor(array, index) {
+    super("ArrayAccessExpression");
+    this.array = array;
+    this.index = index;
+  }
+}
+
 // Export all classes
 export {
   AST,
@@ -275,10 +283,10 @@ export {
   ArrayExpression,
   ObjectExpression,
   PropertyExpression,
-  // Yeni eklenen class-related node'lar
   ClassDeclaration,
   MethodDeclaration,
   PropertyDeclaration,
   ThisExpression,
   NewExpression,
+  ArrayAccessExpression,
 };

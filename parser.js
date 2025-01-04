@@ -1,14 +1,11 @@
 import { TokenType } from "./lexer.js";
-
 import {
-  AST,
   Program,
   FunctionDeclaration,
   VariableDeclaration,
   BlockStatement,
   IfStatement,
   WhileStatement,
-  ForStatement,
   ReturnStatement,
   ExpressionStatement,
   BinaryOperation,
@@ -16,16 +13,13 @@ import {
   LogicalOperation,
   AssignmentExpression,
   CallExpression,
-  GroupingExpression,
+  PropertyExpression,
+  ArrayAccessExpression,
   Identifier,
   NumberLiteral,
   StringLiteral,
   BooleanLiteral,
   NullLiteral,
-  TypeAnnotation,
-  ArrayExpression,
-  ObjectExpression,
-  PropertyExpression,
   ClassDeclaration,
   MethodDeclaration,
   PropertyDeclaration,
@@ -39,13 +33,8 @@ export class Parser {
     this.current = 0;
   }
 
-  // Temel yardımcı metodlar
   peek() {
     return this.tokens[this.current];
-  }
-
-  peekNext() {
-    return this.tokens[this.current + 1];
   }
 
   previous() {
@@ -58,14 +47,10 @@ export class Parser {
 
   match(type) {
     if (this.peek().type === type) {
-      return this.consume();
+      this.consume();
+      return true;
     }
-    return null;
-  }
-
-  check(type) {
-    if (this.isAtEnd()) return false;
-    return this.peek().type === type;
+    return false;
   }
 
   expect(type, message) {
@@ -76,19 +61,12 @@ export class Parser {
     throw new Error(`${message} at line ${token.line}, column ${token.column}`);
   }
 
-  isAtEnd() {
-    return this.peek().type === TokenType.EOF;
-  }
-
-  // Program = Declaration*
   parse() {
     const declarations = [];
-    while (!this.isAtEnd()) {
+    while (this.current < this.tokens.length && this.peek().type !== TokenType.EOF) {
       try {
         const decl = this.parseDeclaration();
-        if (decl) {
-          declarations.push(decl);
-        }
+        if (decl) declarations.push(decl);
       } catch (error) {
         console.error(error);
         this.synchronize();
@@ -97,18 +75,16 @@ export class Parser {
     return new Program(declarations);
   }
 
-  // Hata kurtarma
   synchronize() {
     this.consume();
-
-    while (!this.isAtEnd()) {
+    while (this.current < this.tokens.length) {
       if (this.previous().type === TokenType.SEMICOLON) return;
 
       switch (this.peek().type) {
+        case TokenType.CLASS:
         case TokenType.FN:
         case TokenType.LET:
         case TokenType.MUT:
-        case TokenType.FOR:
         case TokenType.IF:
         case TokenType.WHILE:
         case TokenType.RETURN:
@@ -119,10 +95,7 @@ export class Parser {
     }
   }
 
-  // Declaration = FunctionDecl | VariableDecl | Statement
   parseDeclaration() {
-    console.log("parseDeclaration - Current token:", this.peek().type);
-
     if (this.match(TokenType.CLASS)) {
       return this.parseClassDeclaration();
     }
@@ -131,70 +104,124 @@ export class Parser {
     }
     if (this.match(TokenType.LET) || this.match(TokenType.MUT)) {
       const mutable = this.previous().type === TokenType.MUT;
-      const varDecl = this.parseVariableDeclaration(mutable);
-      console.log("Created VariableDeclaration:", varDecl);
-      return varDecl;
+      return this.parseVariableDeclaration(mutable);
     }
     return this.parseStatement();
   }
 
-  // FunctionDecl = "fn" IDENTIFIER "(" Parameters? ")" "->" Type Block
-  parseFunctionDeclaration() {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected function name").value;
-    this.expect(TokenType.LPAREN, 'Expected "(" after function name');
+  parseClassDeclaration() {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected class name").value;
+    this.expect(TokenType.LBRACE, "Expected '{' after class name");
+
+    const methods = [];
+    const properties = [];
+
+    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
+      const isStatic = this.match(TokenType.STATIC);
+
+      if (this.match(TokenType.FN)) {
+        methods.push(this.parseMethodDeclaration(isStatic));
+      } else {
+        const property = this.parsePropertyDeclaration(isStatic);
+        if (property) properties.push(property);
+      }
+    }
+
+    this.expect(TokenType.RBRACE, "Expected '}' after class body");
+    return new ClassDeclaration(name, methods, properties);
+  }
+
+  parseMethodDeclaration(isStatic) {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected method name").value;
+    this.expect(TokenType.LPAREN, "Expected '(' after method name");
 
     const params = [];
     if (!this.match(TokenType.RPAREN)) {
       do {
         const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
-        this.expect(TokenType.COLON, 'Expected ":" after parameter name');
+        this.expect(TokenType.COLON, "Expected ':' after parameter name");
         const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
         params.push({ name: paramName, type: paramType });
       } while (this.match(TokenType.COMMA));
 
-      this.expect(TokenType.RPAREN, 'Expected ")" after parameters');
+      this.expect(TokenType.RPAREN, "Expected ')' after parameters");
     }
 
-    this.expect(TokenType.ARROW, 'Expected "->" after parameters');
+    this.expect(TokenType.ARROW, "Expected '->' after parameters");
     const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
 
-    this.expect(TokenType.LBRACE, 'Expected "{" before function body');
-    const body = this.parseBlock();
+    const body = [];
+    this.expect(TokenType.LBRACE, "Expected '{' before method body");
+    
+    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
+      const stmt = this.parseStatement();
+      if (stmt) body.push(stmt);
+    }
 
+    this.expect(TokenType.RBRACE, "Expected '}' after method body");
+    return new MethodDeclaration(name, params, returnType, body, isStatic);
+  }
+
+  parsePropertyDeclaration(isStatic) {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected property name").value;
+    this.expect(TokenType.COLON, "Expected ':' after property name");
+    const type = this.expect(TokenType.IDENTIFIER, "Expected property type").value;
+
+    let init = null;
+    if (this.match(TokenType.ASSIGN)) {
+      init = this.parseExpression();
+    }
+
+    this.expect(TokenType.SEMICOLON, "Expected ';' after property declaration");
+    return new PropertyDeclaration(name, type, isStatic, init);
+  }
+
+  parseFunctionDeclaration() {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected function name").value;
+    this.expect(TokenType.LPAREN, "Expected '(' after function name");
+
+    const params = [];
+    if (!this.match(TokenType.RPAREN)) {
+      do {
+        const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
+        this.expect(TokenType.COLON, "Expected ':' after parameter name");
+        const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
+        params.push({ name: paramName, type: paramType });
+      } while (this.match(TokenType.COMMA));
+
+      this.expect(TokenType.RPAREN, "Expected ')' after parameters");
+    }
+
+    this.expect(TokenType.ARROW, "Expected '->' after parameters");
+    const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
+
+    const body = [];
+    this.expect(TokenType.LBRACE, "Expected '{' before function body");
+    
+    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
+      const stmt = this.parseStatement();
+      if (stmt) body.push(stmt);
+    }
+
+    this.expect(TokenType.RBRACE, "Expected '}' after function body");
     return new FunctionDeclaration(name, params, returnType, body);
   }
 
-  // VariableDecl = ("let" | "mut") IDENTIFIER (":" Type)? "=" Expression
   parseVariableDeclaration(mutable = false) {
-    console.log("parseVariableDeclaration - Starting");
-
-    const name = this.expect(
-      TokenType.IDENTIFIER,
-      "Expected variable name"
-    ).value;
-    console.log("parseVariableDeclaration - Got name:", name);
-
+    const name = this.expect(TokenType.IDENTIFIER, "Expected variable name").value;
+    
     let type = null;
     if (this.match(TokenType.COLON)) {
-      type = this.expect(
-        TokenType.IDENTIFIER,
-        "Expected type annotation"
-      ).value;
-      console.log("parseVariableDeclaration - Got type:", type);
+      type = this.expect(TokenType.IDENTIFIER, "Expected type annotation").value;
     }
 
-    this.expect(TokenType.ASSIGN, 'Expected "=" after variable name');
+    this.expect(TokenType.ASSIGN, "Expected '=' after variable name");
     const init = this.parseExpression();
-    console.log("parseVariableDeclaration - Got init:", init);
+    this.expect(TokenType.SEMICOLON, "Expected ';' after variable declaration");
 
-    this.expect(TokenType.SEMICOLON, 'Expected ";" after variable declaration');
-
-    const varDecl = new VariableDeclaration(name, type, mutable, init);
-    console.log("parseVariableDeclaration - Created node:", varDecl);
-    return varDecl;
+    return new VariableDeclaration(name, type, mutable, init);
   }
 
-  // Statement = ExprStmt | BlockStmt | IfStmt | WhileStmt | ReturnStmt
   parseStatement() {
     if (this.match(TokenType.IF)) {
       return this.parseIfStatement();
@@ -217,99 +244,80 @@ export class Parser {
     return this.parseExpressionStatement();
   }
 
-  parseExpressionStatement() {
-    const expr = this.parseExpression();
-    this.expect(TokenType.SEMICOLON, 'Expected ";" after expression statement');
-    return new ExpressionStatement(expr);
-  }
-
-  // Block = "{" Declaration* "}"
   parseBlock() {
-    console.log("parseBlock - Starting");
     const statements = [];
-
-    while (!this.isAtEnd() && !this.match(TokenType.RBRACE)) {
-      const stmt = this.parseDeclaration();
-      if (stmt) {
-        console.log("parseBlock - Got statement:", stmt);
-        statements.push(stmt);
-      }
+    
+    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
+      const stmt = this.parseStatement();
+      if (stmt) statements.push(stmt);
     }
-
-    if (this.previous().type !== TokenType.RBRACE) {
-      throw new Error('Expected "}" after block');
-    }
-
-    console.log("parseBlock - All statements:", statements);
+    
     return statements;
   }
 
-  // IfStmt = "if" Expression Block ("else" Block)?
   parseIfStatement() {
-    this.expect(TokenType.LPAREN, 'Expected "(" after if');
+    this.expect(TokenType.LPAREN, "Expected '(' after 'if'");
     const condition = this.parseExpression();
-    this.expect(TokenType.RPAREN, 'Expected ")" after if condition');
+    this.expect(TokenType.RPAREN, "Expected ')' after if condition");
 
-    this.expect(TokenType.LBRACE, 'Expected "{" before if body');
+    this.expect(TokenType.LBRACE, "Expected '{' before if body");
     const thenBranch = this.parseBlock();
 
     let elseBranch = null;
     if (this.match(TokenType.ELSE)) {
-      this.expect(TokenType.LBRACE, 'Expected "{" before else body');
+      this.expect(TokenType.LBRACE, "Expected '{' before else body");
       elseBranch = this.parseBlock();
     }
 
     return new IfStatement(condition, thenBranch, elseBranch);
   }
 
-  // WhileStmt = "while" Expression Block
   parseWhileStatement() {
-    this.expect(TokenType.LPAREN, 'Expected "(" after while');
+    this.expect(TokenType.LPAREN, "Expected '(' after 'while'");
     const condition = this.parseExpression();
-    this.expect(TokenType.RPAREN, 'Expected ")" after while condition');
+    this.expect(TokenType.RPAREN, "Expected ')' after while condition");
 
+    this.expect(TokenType.LBRACE, "Expected '{' before while body");
     const body = this.parseBlock();
 
     return new WhileStatement(condition, body);
   }
 
-  // ReturnStmt = "return" Expression?
   parseReturnStatement() {
     const value = this.parseExpression();
-    this.expect(TokenType.SEMICOLON, 'Expected ";" after return statement');
+    this.expect(TokenType.SEMICOLON, "Expected ';' after return value");
     return new ReturnStatement(value);
   }
 
-  // Expression = Assignment
+  parseExpressionStatement() {
+    const expr = this.parseExpression();
+    this.expect(TokenType.SEMICOLON, "Expected ';' after expression");
+    return new ExpressionStatement(expr);
+  }
+
   parseExpression() {
     return this.parseAssignment();
   }
 
-  // Assignment = (IDENTIFIER | PropertyExpression) "=" Assignment | LogicalOr
   parseAssignment() {
     const expr = this.parseLogicalOr();
 
     if (this.match(TokenType.ASSIGN)) {
-      const equals = this.previous();
       const value = this.parseAssignment();
-
-      if (expr instanceof Identifier || expr instanceof PropertyExpression) {
-        const target = expr instanceof Identifier ? expr.value : expr;
-        return new AssignmentExpression(target, "=", value);
+      if (expr instanceof Identifier || expr instanceof PropertyExpression || expr instanceof ArrayAccessExpression) {
+        return new AssignmentExpression(expr, "=", value);
       }
-
-      throw new Error(`Invalid assignment target at line ${equals.line}`);
+      throw new Error("Invalid assignment target");
     }
 
     return expr;
   }
 
-  // LogicalOr = LogicalAnd ("||" LogicalAnd)*
   parseLogicalOr() {
     let expr = this.parseLogicalAnd();
 
     while (this.match(TokenType.OR)) {
-      const operator = this.previous().value;
+      const operator = "||";
       const right = this.parseLogicalAnd();
       expr = new LogicalOperation(expr, operator, right);
     }
@@ -317,12 +325,11 @@ export class Parser {
     return expr;
   }
 
-  // LogicalAnd = Equality ("&&" Equality)*
   parseLogicalAnd() {
     let expr = this.parseEquality();
 
     while (this.match(TokenType.AND)) {
-      const operator = this.previous().value;
+      const operator = "&&";
       const right = this.parseEquality();
       expr = new LogicalOperation(expr, operator, right);
     }
@@ -330,12 +337,11 @@ export class Parser {
     return expr;
   }
 
-  // Equality = Comparison (("!=" | "==") Comparison)*
   parseEquality() {
     let expr = this.parseComparison();
 
-    while (this.match(TokenType.BANG_EQUAL) || this.match(TokenType.EQUALS)) {
-      const operator = this.previous().value;
+    while (this.match(TokenType.EQUALS) || this.match(TokenType.BANG_EQUAL)) {
+      const operator = this.previous().type === TokenType.EQUALS ? "==" : "!=";
       const right = this.parseComparison();
       expr = new BinaryOperation(expr, operator, right);
     }
@@ -343,7 +349,6 @@ export class Parser {
     return expr;
   }
 
-  // Comparison = Term ((">" | ">=" | "<" | "<=") Term)*
   parseComparison() {
     let expr = this.parseTerm();
 
@@ -361,7 +366,6 @@ export class Parser {
     return expr;
   }
 
-  // Term = Factor (("+" | "-") Factor)*
   parseTerm() {
     let expr = this.parseFactor();
 
@@ -374,7 +378,6 @@ export class Parser {
     return expr;
   }
 
-  // Factor = Unary (("*" | "/") Unary)*
   parseFactor() {
     let expr = this.parseUnary();
 
@@ -387,7 +390,6 @@ export class Parser {
     return expr;
   }
 
-  // Unary = ("!" | "-") Unary | Call
   parseUnary() {
     if (this.match(TokenType.BANG) || this.match(TokenType.MINUS)) {
       const operator = this.previous().value;
@@ -398,7 +400,6 @@ export class Parser {
     return this.parseCall();
   }
 
-  // Call = Primary ( "(" Arguments? ")" )*
   parseCall() {
     let expr = this.parsePrimary();
 
@@ -408,6 +409,10 @@ export class Parser {
       } else if (this.match(TokenType.DOT)) {
         const name = this.expect(TokenType.IDENTIFIER, "Expected property name after '.'").value;
         expr = new PropertyExpression(expr, new Identifier(name));
+      } else if (this.match(TokenType.LBRACKET)) {
+        const index = this.parseExpression();
+        this.expect(TokenType.RBRACKET, "Expected ']' after array index");
+        expr = new ArrayAccessExpression(expr, index);
       } else {
         break;
       }
@@ -418,18 +423,17 @@ export class Parser {
 
   finishCall(callee) {
     const args = [];
-    if (!this.check(TokenType.RPAREN)) {
+    if (!this.match(TokenType.RPAREN)) {
       do {
         args.push(this.parseExpression());
       } while (this.match(TokenType.COMMA));
-    }
 
-    this.expect(TokenType.RPAREN, 'Expected ")" after arguments');
+      this.expect(TokenType.RPAREN, "Expected ')' after arguments");
+    }
 
     return new CallExpression(callee, args);
   }
 
-  // Primary = NUMBER | STRING | "true" | "false" | "nil" | "(" Expression ")" | IDENTIFIER
   parsePrimary() {
     if (this.match(TokenType.NUMBER)) {
       return new NumberLiteral(this.previous().value);
@@ -446,102 +450,30 @@ export class Parser {
     if (this.match(TokenType.NIL)) {
       return new NullLiteral();
     }
+    if (this.match(TokenType.THIS)) {
+      return new ThisExpression();
+    }
+    if (this.match(TokenType.NEW)) {
+      const className = this.expect(TokenType.IDENTIFIER, "Expected class name after 'new'").value;
+      this.expect(TokenType.LPAREN, "Expected '(' after class name");
+      const args = [];
+      if (!this.match(TokenType.RPAREN)) {
+        do {
+          args.push(this.parseExpression());
+        } while (this.match(TokenType.COMMA));
+        this.expect(TokenType.RPAREN, "Expected ')' after arguments");
+      }
+      return new NewExpression(className, args);
+    }
     if (this.match(TokenType.IDENTIFIER)) {
       return new Identifier(this.previous().value);
     }
     if (this.match(TokenType.LPAREN)) {
       const expr = this.parseExpression();
-      this.expect(TokenType.RPAREN, 'Expected ")" after expression');
-      return new GroupingExpression(expr);
-    }
-    if (this.match(TokenType.THIS)) {
-      return new ThisExpression();
-    }
-    if (this.match(TokenType.NEW)) {
-      return this.parseNewExpression();
+      this.expect(TokenType.RPAREN, "Expected ')' after expression");
+      return expr;
     }
 
-    throw new Error(
-      `Unexpected token: ${this.peek().type} at line ${this.peek().line}`
-    );
-  }
-
-  parseNewExpression() {
-    const className = this.expect(TokenType.IDENTIFIER, "Expected class name after 'new'").value;
-    this.expect(TokenType.LPAREN, 'Expected "(" after class name');
-
-    const args = [];
-    if (!this.check(TokenType.RPAREN)) {
-      do {
-        args.push(this.parseExpression());
-      } while (this.match(TokenType.COMMA));
-    }
-
-    this.expect(TokenType.RPAREN, 'Expected ")" after arguments');
-    return new NewExpression(className, args);
-  }
-
-  parseClassDeclaration() {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected class name").value;
-    this.expect(TokenType.LBRACE, 'Expected "{" before class body');
-
-    const properties = [];
-    const methods = [];
-
-    while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-      const isStatic = this.match(TokenType.STATIC);
-
-      if (this.match(TokenType.FN)) {
-        // Method tanımı
-        const method = this.parseMethodDeclaration(isStatic);
-        methods.push(method);
-      } else {
-        // Property tanımı
-        const property = this.parsePropertyDeclaration(isStatic);
-        properties.push(property);
-      }
-    }
-
-    this.expect(TokenType.RBRACE, 'Expected "}" after class body');
-    return new ClassDeclaration(name, methods, properties);
-  }
-
-  parseMethodDeclaration(isStatic) {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected method name").value;
-    this.expect(TokenType.LPAREN, 'Expected "(" after method name');
-
-    const params = [];
-    if (!this.match(TokenType.RPAREN)) {
-      do {
-        const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
-        this.expect(TokenType.COLON, 'Expected ":" after parameter name');
-        const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
-        params.push({ name: paramName, type: paramType });
-      } while (this.match(TokenType.COMMA));
-
-      this.expect(TokenType.RPAREN, 'Expected ")" after parameters');
-    }
-
-    this.expect(TokenType.ARROW, 'Expected "->" after parameters');
-    const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
-
-    this.expect(TokenType.LBRACE, 'Expected "{" before method body');
-    const body = this.parseBlock();
-
-    return new MethodDeclaration(name, params, returnType, body, isStatic);
-  }
-
-  parsePropertyDeclaration(isStatic) {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected property name").value;
-    this.expect(TokenType.COLON, 'Expected ":" after property name');
-    const type = this.expect(TokenType.IDENTIFIER, "Expected property type").value;
-
-    let init = null;
-    if (this.match(TokenType.ASSIGN)) {
-      init = this.parseExpression();
-    }
-
-    this.expect(TokenType.SEMICOLON, 'Expected ";" after property declaration');
-    return new PropertyDeclaration(name, type, isStatic, init);
+    throw new Error(`Unexpected token: ${this.peek().type} at line ${this.peek().line}`);
   }
 }

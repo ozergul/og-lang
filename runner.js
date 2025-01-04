@@ -1,89 +1,80 @@
 // runner.js
-import fs from "fs";
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
-import { CodeGenerator } from "./codeGenerator.js";
+import fs from 'fs/promises';
+import url from 'url';
+import { TokenType , Lexer} from './lexer.js';
+import { Parser } from './parser.js';
+import { generateCode } from './codeGenerator.js';
 
-async function runFile(filename) {
+async function runFile(filePath) {
   try {
-    // Dosyayı oku
-    const sourceCode = fs.readFileSync(filename, "utf8");
+    // 1. Kaynak kodu oku
+    const sourceCode = await fs.readFile(filePath, 'utf8');
     console.log("Kaynak kod:");
     console.log(sourceCode);
-    console.log("-----------------");
+    console.log("-----------------\n");
 
-    // 1. Lexical Analiz
-    console.log("\n1. Lexical Analiz başlıyor...");
+    // 2. Lexical analiz
+    console.log("1. Lexical Analiz başlıyor...");
     const lexer = new Lexer(sourceCode);
-    const tokens = lexer.tokenize();
-    console.log("Token'lar:");
-    tokens.forEach((token) => {
-      console.log(
-        `${token.type}: ${token.value} (satır: ${token.line}, sütun: ${token.column})`
-      );
-    });
+    const tokens = [];
+    let token;
+    do {
+      token = lexer.getNextToken();
+      tokens.push(token);
+    } while (token.type !== TokenType.EOF);
 
-    // 2. Parsing
-    console.log("\n2. Parsing başlıyor...");
+    console.log("Token'lar:");
+    tokens.forEach(t => console.log(`${t.type}: ${t.value} (satır: ${t.line}, sütun: ${t.column})`));
+    console.log();
+
+    // 3. Parsing
+    console.log("2. Parsing başlıyor...");
     const parser = new Parser(tokens);
     const ast = parser.parse();
-    console.log("\nAST yapısı:");
+    console.log("AST yapısı:");
     console.log(JSON.stringify(ast, null, 2));
+    console.log();
 
-    // 3. Code Generation
-    console.log("\n3. JavaScript kodu üretiliyor...");
-    const generator = new CodeGenerator(ast);
-    const jsCode = generator.generateCode();
-
-    // JavaScript kodunu göster ve kaydet
+    // 4. JavaScript kodu üret
+    console.log("3. JavaScript kodu üretiliyor...");
+    const jsCode = generateCode(ast);
     console.log("\nÜretilen JavaScript kodu:");
     console.log("------------------------");
     console.log(jsCode);
-    console.log("------------------------");
+    console.log("------------------------\n");
 
-    const outputFile = filename.replace(/\.[^.]+$/, ".js");
-    fs.writeFileSync(outputFile, jsCode);
-    console.log(`\nJavaScript kodu '${outputFile}' dosyasına kaydedildi.`);
+    // 5. JavaScript dosyasını kaydet
+    const jsFilePath = filePath.replace('.oglang', '.js');
+    await fs.writeFile(jsFilePath, jsCode);
+    console.log(`JavaScript kodu '${jsFilePath}' dosyasına kaydedildi.\n`);
 
-    // 4. Kodu çalıştır
-    console.log("\n4. Kod çalıştırılıyor...");
-
-    // Global context'te eval
-    const context = {};
-    const evalInContext = `
-            (async function() {
-                try {
-                    ${jsCode}
-                } catch (error) {
-                    console.error('Çalışma zamanı hatası:', error);
-                }
-            })();
-        `;
-
-    const result = await eval(evalInContext);
-    console.log("Sonuç:", result);
-  } catch (error) {
-    console.error("\nHata:", error);
-    if (error.stack) {
-      console.error("\nStack trace:", error.stack);
+    // 6. JavaScript kodunu çalıştır
+    console.log("4. Kod çalıştırılıyor...");
+    const module = await import(url.pathToFileURL(jsFilePath));
+    if (typeof module.main === 'function') {
+      const result = module.main();
+      console.log("Sonuç:", result);
     }
+
+  } catch (error) {
+    console.error("Hata:", error);
+    console.error("\nStack trace:", error);
+    process.exit(1);
   }
 }
 
-// Ana fonksiyon
 async function main() {
-  const sourceFile = process.argv[2] || "test.oglang";
-  if (!sourceFile) {
-    console.error("Lütfen bir dosya adı belirtin!");
-    console.log("Kullanım: node runner.js <dosya_adı>");
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    console.error('Lütfen bir .oglang dosyası belirtin.');
     process.exit(1);
   }
 
-  await runFile(sourceFile);
+  try {
+    await runFile(args[0]);
+  } catch (error) {
+    process.exit(1);
+  }
 }
 
-// Programı çalıştır
-main().catch((error) => {
-  console.error("Program hatası:", error);
-  process.exit(1);
-});
+main();

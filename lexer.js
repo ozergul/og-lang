@@ -125,6 +125,12 @@ class Lexer {
     }
   }
 
+  skipComment() {
+    while (this.currentChar && this.currentChar !== '\n') {
+      this.advance();
+    }
+  }
+
   number() {
     let result = "";
     while (this.currentChar && /\d/.test(this.currentChar)) {
@@ -183,6 +189,10 @@ class Lexer {
         result += this.currentChar;
       }
       this.advance();
+    }
+
+    if (!this.currentChar) {
+      this.error();
     }
 
     this.advance();
@@ -248,44 +258,29 @@ class Lexer {
           }
           return new Token(TokenType.ASSIGN, "=", this.line, this.column);
 
-        case ">":
+        case "!":
           this.advance();
           if (this.currentChar === "=") {
             this.advance();
-            return new Token(
-              TokenType.GREATER_EQUAL,
-              ">=",
-              this.line,
-              this.column
-            );
+            return new Token(TokenType.BANG_EQUAL, "!=", this.line, this.column);
           }
-          return new Token(TokenType.GREATER, ">", this.line, this.column);
+          return new Token(TokenType.BANG, "!", this.line, this.column);
 
         case "<":
           this.advance();
           if (this.currentChar === "=") {
             this.advance();
-            return new Token(
-              TokenType.LESS_EQUAL,
-              "<=",
-              this.line,
-              this.column
-            );
+            return new Token(TokenType.LESS_EQUAL, "<=", this.line, this.column);
           }
           return new Token(TokenType.LESS, "<", this.line, this.column);
 
-        case "!":
+        case ">":
           this.advance();
           if (this.currentChar === "=") {
             this.advance();
-            return new Token(
-              TokenType.BANG_EQUAL,
-              "!=",
-              this.line,
-              this.column
-            );
+            return new Token(TokenType.GREATER_EQUAL, ">=", this.line, this.column);
           }
-          return new Token(TokenType.BANG, "!", this.line, this.column);
+          return new Token(TokenType.GREATER, ">", this.line, this.column);
 
         case "&":
           this.advance();
@@ -293,7 +288,7 @@ class Lexer {
             this.advance();
             return new Token(TokenType.AND, "&&", this.line, this.column);
           }
-          break;
+          this.error();
 
         case "|":
           this.advance();
@@ -301,7 +296,7 @@ class Lexer {
             this.advance();
             return new Token(TokenType.OR, "||", this.line, this.column);
           }
-          break;
+          this.error();
 
         case "(":
           this.advance();
@@ -319,6 +314,14 @@ class Lexer {
           this.advance();
           return new Token(TokenType.RBRACE, "}", this.line, this.column);
 
+        case "[":
+          this.advance();
+          return new Token(TokenType.LBRACKET, "[", this.line, this.column);
+
+        case "]":
+          this.advance();
+          return new Token(TokenType.RBRACKET, "]", this.line, this.column);
+
         case ":":
           this.advance();
           return new Token(TokenType.COLON, ":", this.line, this.column);
@@ -334,33 +337,12 @@ class Lexer {
         case ".":
           this.advance();
           return new Token(TokenType.DOT, ".", this.line, this.column);
-      }
 
-      this.error();
+        default:
+          this.error();
+      }
     }
 
     return new Token(TokenType.EOF, null, this.line, this.column);
-  }
-
-  tokenize() {
-    const tokens = [];
-    let token = this.getNextToken();
-    while (token.type !== TokenType.EOF) {
-      tokens.push(token);
-      token = this.getNextToken();
-    }
-    tokens.push(token);
-    return tokens;
-  }
-
-  skipComment() {
-    // İlk iki slash'ı atla
-    this.advance();
-    this.advance();
-
-    // Satır sonuna kadar ilerle
-    while (this.currentChar !== null && this.currentChar !== '\n') {
-      this.advance();
-    }
   }
 }
