@@ -52,6 +52,12 @@ const TokenType = {
   NUMBER: "NUMBER",
   STRING: "STRING",
   EOF: "EOF",
+
+  // Class-related tokens
+  CLASS: "CLASS",
+  NEW: "NEW",
+  THIS: "THIS",
+  STATIC: "STATIC",
 };
 
 // token.js
@@ -72,6 +78,24 @@ class Lexer {
     this.line = 1;
     this.column = 1;
     this.currentChar = this.input[this.position];
+
+    this.keywords = {
+      let: TokenType.LET,
+      mut: TokenType.MUT,
+      fn: TokenType.FN,
+      return: TokenType.RETURN,
+      if: TokenType.IF,
+      else: TokenType.ELSE,
+      when: TokenType.WHEN,
+      for: TokenType.FOR,
+      in: TokenType.IN,
+      while: TokenType.WHILE,
+      match: TokenType.MATCH,
+      "class": TokenType.CLASS,
+      "new": TokenType.NEW,
+      "this": TokenType.THIS,
+      "static": TokenType.STATIC,
+    };
   }
 
   error() {
@@ -127,21 +151,7 @@ class Lexer {
       this.advance();
     }
 
-    const keywords = {
-      let: TokenType.LET,
-      mut: TokenType.MUT,
-      fn: TokenType.FN,
-      return: TokenType.RETURN,
-      if: TokenType.IF,
-      else: TokenType.ELSE,
-      when: TokenType.WHEN,
-      for: TokenType.FOR,
-      in: TokenType.IN,
-      while: TokenType.WHILE,
-      match: TokenType.MATCH,
-    };
-
-    const tokenType = keywords[result] || TokenType.IDENTIFIER;
+    const tokenType = this.keywords[result] || TokenType.IDENTIFIER;
     return new Token(tokenType, result, this.line, this.column);
   }
 
@@ -311,6 +321,10 @@ class Lexer {
         case ",":
           this.advance();
           return new Token(TokenType.COMMA, ",", this.line, this.column);
+
+        case ".":
+          this.advance();
+          return new Token(TokenType.DOT, ".", this.line, this.column);
       }
 
       this.error();

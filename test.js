@@ -14,68 +14,42 @@ const _runtime = {
     }
 };
 
-async function factorial(n) {
-  _runtime.checkType(n, "number");
-  if ((n > 1)) {
-    return (n * await factorial((n - 1)))
-  } else {
-    return 1
+class Calculator {
+  constructor() {
+    this.result = 0;
   }
-}
-async function fibonacci(n) {
-  _runtime.checkType(n, "number");
-  if ((n <= 1)) {
-    return n
-  } else {
-    return (await fibonacci((n - 1)) + await fibonacci((n - 2)))
+
+  async add(x) {
+    _runtime.checkType(x, "number");
+    this.result = (this.result + x)
+    return this.result
   }
-}
-async function power(base, exp) {
-  _runtime.checkType(base, "number");
-  _runtime.checkType(exp, "number");
-  if ((exp == 0)) {
-    return 1
-  } else {
-    return (base * await power(base, (exp - 1)))
+  async subtract(x) {
+    _runtime.checkType(x, "number");
+    this.result = (this.result - x)
+    return this.result
   }
-}
-async function greet(name) {
-  _runtime.checkType(name, "string");
-  return (("Merhaba, " + name) + "!")
-}
-async function calculate(a, b, op) {
-  _runtime.checkType(a, "number");
-  _runtime.checkType(b, "number");
-  _runtime.checkType(op, "string");
-  if ((op == "+")) {
-    return (a + b)
-  } else {
-    if ((op == "-")) {
-      return (a - b)
-    } else {
-      if ((op == "*")) {
-        return (a * b)
-      } else {
-        if ((op == "/")) {
-          return (a / b)
-        } else {
-          return 0
-        }
-      }
-    }
+  async multiply(x) {
+    _runtime.checkType(x, "number");
+    this.result = (this.result * x)
+    return this.result
+  }
+  async divide(x) {
+    _runtime.checkType(x, "number");
+    this.result = (this.result / x)
+    return this.result
+  }
+  static async pi() {
+    return 3.14159
   }
 }
 async function main() {
-  const name = "OgLang"
-  const greeting = await greet(name)
-  const fact5 = await factorial(5)
-  const fib6 = await fibonacci(6)
-  const pow2_3 = await power(2, 3)
-  const sum = await calculate(10, 5, "+")
-  const diff = await calculate(10, 5, "-")
-  const prod = await calculate(10, 5, "*")
-  const quot = await calculate(10, 5, "/")
-  const result = ((((((fact5 + fib6) + pow2_3) + sum) + diff) + prod) + quot)
+  let calc = new Calculator()
+  let result = await calc.add(10)
+  result = await calc.multiply(2)
+  result = await calc.subtract(5)
+  result = await calc.divide(3)
+  let pi = await Calculator.pi()
   return result
 }
 

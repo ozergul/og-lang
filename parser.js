@@ -26,6 +26,11 @@ import {
   ArrayExpression,
   ObjectExpression,
   PropertyExpression,
+  ClassDeclaration,
+  MethodDeclaration,
+  PropertyDeclaration,
+  ThisExpression,
+  NewExpression,
 } from "./ast.js";
 
 export class Parser {
@@ -118,6 +123,9 @@ export class Parser {
   parseDeclaration() {
     console.log("parseDeclaration - Current token:", this.peek().type);
 
+    if (this.match(TokenType.CLASS)) {
+      return this.parseClassDeclaration();
+    }
     if (this.match(TokenType.FN)) {
       return this.parseFunctionDeclaration();
     }
@@ -273,7 +281,7 @@ export class Parser {
     return this.parseAssignment();
   }
 
-  // Assignment = IDENTIFIER "=" Assignment | LogicalOr
+  // Assignment = (IDENTIFIER | PropertyExpression) "=" Assignment | LogicalOr
   parseAssignment() {
     const expr = this.parseLogicalOr();
 
@@ -281,8 +289,9 @@ export class Parser {
       const equals = this.previous();
       const value = this.parseAssignment();
 
-      if (expr instanceof Identifier) {
-        return new AssignmentExpression(expr.value, "=", value);
+      if (expr instanceof Identifier || expr instanceof PropertyExpression) {
+        const target = expr instanceof Identifier ? expr.value : expr;
+        return new AssignmentExpression(target, "=", value);
       }
 
       throw new Error(`Invalid assignment target at line ${equals.line}`);
@@ -392,6 +401,9 @@ export class Parser {
     while (true) {
       if (this.match(TokenType.LPAREN)) {
         expr = this.finishCall(expr);
+      } else if (this.match(TokenType.DOT)) {
+        const name = this.expect(TokenType.IDENTIFIER, "Expected property name after '.'").value;
+        expr = new PropertyExpression(expr, new Identifier(name));
       } else {
         break;
       }
@@ -438,9 +450,93 @@ export class Parser {
       this.expect(TokenType.RPAREN, 'Expected ")" after expression');
       return new GroupingExpression(expr);
     }
+    if (this.match(TokenType.THIS)) {
+      return new ThisExpression();
+    }
+    if (this.match(TokenType.NEW)) {
+      return this.parseNewExpression();
+    }
 
     throw new Error(
       `Unexpected token: ${this.peek().type} at line ${this.peek().line}`
     );
+  }
+
+  parseNewExpression() {
+    const className = this.expect(TokenType.IDENTIFIER, "Expected class name after 'new'").value;
+    this.expect(TokenType.LPAREN, 'Expected "(" after class name');
+
+    const args = [];
+    if (!this.check(TokenType.RPAREN)) {
+      do {
+        args.push(this.parseExpression());
+      } while (this.match(TokenType.COMMA));
+    }
+
+    this.expect(TokenType.RPAREN, 'Expected ")" after arguments');
+    return new NewExpression(className, args);
+  }
+
+  parseClassDeclaration() {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected class name").value;
+    this.expect(TokenType.LBRACE, 'Expected "{" before class body');
+
+    const properties = [];
+    const methods = [];
+
+    while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
+      const isStatic = this.match(TokenType.STATIC);
+
+      if (this.match(TokenType.FN)) {
+        // Method tanımı
+        const method = this.parseMethodDeclaration(isStatic);
+        methods.push(method);
+      } else {
+        // Property tanımı
+        const property = this.parsePropertyDeclaration(isStatic);
+        properties.push(property);
+      }
+    }
+
+    this.expect(TokenType.RBRACE, 'Expected "}" after class body');
+    return new ClassDeclaration(name, methods, properties);
+  }
+
+  parseMethodDeclaration(isStatic) {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected method name").value;
+    this.expect(TokenType.LPAREN, 'Expected "(" after method name');
+
+    const params = [];
+    if (!this.match(TokenType.RPAREN)) {
+      do {
+        const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
+        this.expect(TokenType.COLON, 'Expected ":" after parameter name');
+        const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
+        params.push({ name: paramName, type: paramType });
+      } while (this.match(TokenType.COMMA));
+
+      this.expect(TokenType.RPAREN, 'Expected ")" after parameters');
+    }
+
+    this.expect(TokenType.ARROW, 'Expected "->" after parameters');
+    const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
+
+    this.expect(TokenType.LBRACE, 'Expected "{" before method body');
+    const body = this.parseBlock();
+
+    return new MethodDeclaration(name, params, returnType, body, isStatic);
+  }
+
+  parsePropertyDeclaration(isStatic) {
+    const name = this.expect(TokenType.IDENTIFIER, "Expected property name").value;
+    this.expect(TokenType.COLON, 'Expected ":" after property name');
+    const type = this.expect(TokenType.IDENTIFIER, "Expected property type").value;
+
+    let init = null;
+    if (this.match(TokenType.ASSIGN)) {
+      init = this.parseExpression();
+    }
+
+    return new PropertyDeclaration(name, type, isStatic, init);
   }
 }

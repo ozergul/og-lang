@@ -203,6 +203,51 @@ class PropertyExpression extends AST {
   }
 }
 
+// Class-related nodes
+class ClassDeclaration extends AST {
+  constructor(name, methods, properties) {
+    super("ClassDeclaration");
+    this.name = name;
+    this.methods = methods;
+    this.properties = properties;
+  }
+}
+
+class MethodDeclaration extends AST {
+  constructor(name, params, returnType, body, isStatic = false) {
+    super("MethodDeclaration");
+    this.name = name;
+    this.params = params;
+    this.returnType = returnType;
+    this.body = body;
+    this.isStatic = isStatic;
+  }
+}
+
+class PropertyDeclaration extends AST {
+  constructor(name, type, isStatic = false, init = null) {
+    super("PropertyDeclaration");
+    this.name = name;
+    this.type = type;
+    this.isStatic = isStatic;
+    this.init = init;
+  }
+}
+
+class ThisExpression extends AST {
+  constructor() {
+    super("ThisExpression");
+  }
+}
+
+class NewExpression extends AST {
+  constructor(className, args) {
+    super("NewExpression");
+    this.className = className;
+    this.arguments = args;
+  }
+}
+
 // Export all classes
 export {
   AST,
@@ -230,4 +275,10 @@ export {
   ArrayExpression,
   ObjectExpression,
   PropertyExpression,
+  // Yeni eklenen class-related node'lar
+  ClassDeclaration,
+  MethodDeclaration,
+  PropertyDeclaration,
+  ThisExpression,
+  NewExpression,
 };
