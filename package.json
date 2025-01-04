@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "run-test-file": "node runner.js test.ozer"
+    "run-test-file": "node runner.js test.oglang"
   }
 }
