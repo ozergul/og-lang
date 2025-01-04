@@ -63,7 +63,7 @@ function generateClassDeclaration(decl) {
     code += generateMethodDeclaration(method);
   }
   
-  code += "}\n\n";
+  code += "}\n";
   return code;
 }
 
@@ -125,25 +125,25 @@ function generateStatement(stmt) {
 function generateBlockStatement(stmt) {
   let code = "{\n";
   for (const s of stmt.statements) {
-    code += "    " + generateStatement(s) + "\n";
+    code += "  " + generateStatement(s) + "\n";
   }
-  code += "  }";
+  code += "}";
   return code;
 }
 
 function generateIfStatement(stmt) {
   let code = `if (${generateExpression(stmt.condition)}) {\n`;
   for (const s of stmt.thenBranch) {
-    code += "    " + generateStatement(s) + "\n";
+    code += "  " + generateStatement(s) + "\n";
   }
-  code += "  }";
+  code += "}";
   
   if (stmt.elseBranch) {
     code += ` else {\n`;
     for (const s of stmt.elseBranch) {
-      code += "    " + generateStatement(s) + "\n";
+      code += "  " + generateStatement(s) + "\n";
     }
-    code += "  }";
+    code += "}";
   }
   
   return code;
@@ -152,9 +152,9 @@ function generateIfStatement(stmt) {
 function generateWhileStatement(stmt) {
   let code = `while (${generateExpression(stmt.condition)}) {\n`;
   for (const s of stmt.body) {
-    code += "    " + generateStatement(s) + "\n";
+    code += "  " + generateStatement(s) + "\n";
   }
-  code += "  }";
+  code += "}";
   return code;
 }
 

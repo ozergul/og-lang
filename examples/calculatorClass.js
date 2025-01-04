@@ -49,7 +49,6 @@ class Calculator {
 
 }
 
-
 function main() {
   let calc = new Calculator();
   let result = calc.add(10);

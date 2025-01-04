@@ -62,22 +62,50 @@ export class Parser {
   }
 
   parse() {
-    const declarations = [];
-    while (this.current < this.tokens.length && this.peek().type !== TokenType.EOF) {
-      try {
-        const decl = this.parseDeclaration();
-        if (decl) declarations.push(decl);
-      } catch (error) {
-        console.error(error);
-        this.synchronize();
+    try {
+      const declarations = [];
+      while (!this.isAtEnd()) {
+        try {
+          const decl = this.parseDeclaration();
+          if (decl) declarations.push(decl);
+        } catch (error) {
+          console.error("Error in parseDeclaration:", error);
+          this.synchronize();
+        }
       }
+      return new Program(declarations);
+    } catch (error) {
+      console.error("Fatal error in parse:", error);
+      throw error;
     }
-    return new Program(declarations);
+  }
+
+  isAtEnd() {
+    return this.peek().type === TokenType.EOF;
+  }
+
+  parseDeclaration() {
+    try {
+      if (this.match(TokenType.CLASS)) {
+        return this.parseClassDeclaration();
+      }
+      if (this.match(TokenType.FN)) {
+        return this.parseFunctionDeclaration();
+      }
+      if (this.match(TokenType.LET) || this.match(TokenType.MUT)) {
+        const mutable = this.previous().type === TokenType.MUT;
+        return this.parseVariableDeclaration(mutable);
+      }
+
+      return this.parseStatement();
+    } catch (error) {
+      this.synchronize();
+      return null;
+    }
   }
 
   synchronize() {
-    this.consume();
-    while (this.current < this.tokens.length) {
+    while (!this.isAtEnd()) {
       if (this.previous().type === TokenType.SEMICOLON) return;
 
       switch (this.peek().type) {
@@ -95,85 +123,85 @@ export class Parser {
     }
   }
 
-  parseDeclaration() {
-    if (this.match(TokenType.CLASS)) {
-      return this.parseClassDeclaration();
-    }
-    if (this.match(TokenType.FN)) {
-      return this.parseFunctionDeclaration();
-    }
-    if (this.match(TokenType.LET) || this.match(TokenType.MUT)) {
-      const mutable = this.previous().type === TokenType.MUT;
-      return this.parseVariableDeclaration(mutable);
-    }
-    return this.parseStatement();
-  }
-
   parseClassDeclaration() {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected class name").value;
-    this.expect(TokenType.LBRACE, "Expected '{' after class name");
+    try {
+      const name = this.expect(TokenType.IDENTIFIER, "Expected class name").value;
+      this.expect(TokenType.LBRACE, "Expected '{' after class name");
 
-    const methods = [];
-    const properties = [];
+      const methods = [];
+      const properties = [];
 
-    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
-      const isStatic = this.match(TokenType.STATIC);
+      while (!this.isAtEnd() && this.peek().type !== TokenType.RBRACE) {
+        const isStatic = this.match(TokenType.STATIC);
 
-      if (this.match(TokenType.FN)) {
-        methods.push(this.parseMethodDeclaration(isStatic));
-      } else {
+        if (this.peek().type === TokenType.FN) {
+          this.match(TokenType.FN);
+          const method = this.parseMethodDeclaration(isStatic);
+          if (method) methods.push(method);
+          continue;
+        }
+
         const property = this.parsePropertyDeclaration(isStatic);
         if (property) properties.push(property);
       }
-    }
 
-    this.expect(TokenType.RBRACE, "Expected '}' after class body");
-    return new ClassDeclaration(name, methods, properties);
+      this.expect(TokenType.RBRACE, "Expected '}' after class body");
+      return new ClassDeclaration(name, methods, properties);
+    } catch (error) {
+      console.error("Error in parseClassDeclaration:", error);
+      throw error;
+    }
   }
 
   parseMethodDeclaration(isStatic) {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected method name").value;
-    this.expect(TokenType.LPAREN, "Expected '(' after method name");
+    try {
+      const name = this.expect(TokenType.IDENTIFIER, "Expected method name").value;
+      this.expect(TokenType.LPAREN, "Expected '(' after method name");
 
-    const params = [];
-    if (!this.match(TokenType.RPAREN)) {
-      do {
-        const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
-        this.expect(TokenType.COLON, "Expected ':' after parameter name");
-        const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
-        params.push({ name: paramName, type: paramType });
-      } while (this.match(TokenType.COMMA));
+      const params = [];
+      if (!this.match(TokenType.RPAREN)) {
+        do {
+          const paramName = this.expect(TokenType.IDENTIFIER, "Expected parameter name").value;
+          this.expect(TokenType.COLON, "Expected ':' after parameter name");
+          const paramType = this.expect(TokenType.IDENTIFIER, "Expected parameter type").value;
+          params.push({ name: paramName, type: paramType });
+        } while (this.match(TokenType.COMMA));
 
-      this.expect(TokenType.RPAREN, "Expected ')' after parameters");
+        this.expect(TokenType.RPAREN, "Expected ')' after parameters");
+      }
+
+      this.expect(TokenType.ARROW, "Expected '->' after parameters");
+      const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
+
+      const body = this.parseBlock();
+      return new MethodDeclaration(name, params, returnType, body, isStatic);
+    } catch (error) {
+      console.error("Error in parseMethodDeclaration:", error);
+      throw error;
     }
-
-    this.expect(TokenType.ARROW, "Expected '->' after parameters");
-    const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
-
-    const body = [];
-    this.expect(TokenType.LBRACE, "Expected '{' before method body");
-    
-    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
-      const stmt = this.parseStatement();
-      if (stmt) body.push(stmt);
-    }
-
-    this.expect(TokenType.RBRACE, "Expected '}' after method body");
-    return new MethodDeclaration(name, params, returnType, body, isStatic);
   }
 
   parsePropertyDeclaration(isStatic) {
-    const name = this.expect(TokenType.IDENTIFIER, "Expected property name").value;
-    this.expect(TokenType.COLON, "Expected ':' after property name");
-    const type = this.expect(TokenType.IDENTIFIER, "Expected property type").value;
+    try {
+      if (this.peek().type === TokenType.FN) {
+        return null;
+      }
 
-    let init = null;
-    if (this.match(TokenType.ASSIGN)) {
-      init = this.parseExpression();
+      const name = this.expect(TokenType.IDENTIFIER, "Expected property name").value;
+      this.expect(TokenType.COLON, "Expected ':' after property name");
+      const type = this.expect(TokenType.IDENTIFIER, "Expected property type").value;
+
+      let init = null;
+      if (this.match(TokenType.ASSIGN)) {
+        init = this.parseExpression();
+      }
+
+      this.expect(TokenType.SEMICOLON, "Expected ';' after property declaration");
+      return new PropertyDeclaration(name, type, isStatic, init);
+    } catch (error) {
+      console.error("Error in parsePropertyDeclaration:", error);
+      throw error;
     }
-
-    this.expect(TokenType.SEMICOLON, "Expected ';' after property declaration");
-    return new PropertyDeclaration(name, type, isStatic, init);
   }
 
   parseFunctionDeclaration() {
@@ -195,15 +223,8 @@ export class Parser {
     this.expect(TokenType.ARROW, "Expected '->' after parameters");
     const returnType = this.expect(TokenType.IDENTIFIER, "Expected return type").value;
 
-    const body = [];
-    this.expect(TokenType.LBRACE, "Expected '{' before function body");
+    const body = this.parseBlock();
     
-    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
-      const stmt = this.parseStatement();
-      if (stmt) body.push(stmt);
-    }
-
-    this.expect(TokenType.RBRACE, "Expected '}' after function body");
     return new FunctionDeclaration(name, params, returnType, body);
   }
 
@@ -223,36 +244,51 @@ export class Parser {
   }
 
   parseStatement() {
-    if (this.match(TokenType.IF)) {
-      return this.parseIfStatement();
-    }
-    if (this.match(TokenType.WHILE)) {
-      return this.parseWhileStatement();
-    }
-    if (this.match(TokenType.RETURN)) {
-      return this.parseReturnStatement();
-    }
-    if (this.match(TokenType.LBRACE)) {
-      const statements = this.parseBlock();
-      return new BlockStatement(statements);
-    }
-    if (this.match(TokenType.LET) || this.match(TokenType.MUT)) {
-      const mutable = this.previous().type === TokenType.MUT;
-      return this.parseVariableDeclaration(mutable);
-    }
+    try {
+      if (this.match(TokenType.IF)) {
+        return this.parseIfStatement();
+      }
+      if (this.match(TokenType.WHILE)) {
+        return this.parseWhileStatement();
+      }
+      if (this.match(TokenType.RETURN)) {
+        const value = this.parseExpression();
+        this.expect(TokenType.SEMICOLON, "Expected ';' after return value");
+        return new ReturnStatement(value);
+      }
+      if (this.peek().type === TokenType.LBRACE) {
+        return new BlockStatement(this.parseBlock());
+      }
+      if (this.match(TokenType.LET) || this.match(TokenType.MUT)) {
+        const mutable = this.previous().type === TokenType.MUT;
+        return this.parseVariableDeclaration(mutable);
+      }
 
-    return this.parseExpressionStatement();
+      const expr = this.parseExpression();
+      this.expect(TokenType.SEMICOLON, "Expected ';' after expression");
+      return new ExpressionStatement(expr);
+    } catch (error) {
+      this.synchronize();
+      return null;
+    }
   }
 
   parseBlock() {
-    const statements = [];
-    
-    while (this.peek().type !== TokenType.RBRACE && this.peek().type !== TokenType.EOF) {
-      const stmt = this.parseStatement();
-      if (stmt) statements.push(stmt);
+    try {
+      this.expect(TokenType.LBRACE, "Expected '{'");
+      const statements = [];
+      
+      while (!this.isAtEnd() && this.peek().type !== TokenType.RBRACE) {
+        const stmt = this.parseStatement();
+        if (stmt) statements.push(stmt);
+      }
+      
+      this.expect(TokenType.RBRACE, "Expected '}'");
+      return statements;
+    } catch (error) {
+      console.error("Error in parseBlock:", error);
+      throw error;
     }
-    
-    return statements;
   }
 
   parseIfStatement() {
@@ -260,12 +296,10 @@ export class Parser {
     const condition = this.parseExpression();
     this.expect(TokenType.RPAREN, "Expected ')' after if condition");
 
-    this.expect(TokenType.LBRACE, "Expected '{' before if body");
     const thenBranch = this.parseBlock();
 
     let elseBranch = null;
     if (this.match(TokenType.ELSE)) {
-      this.expect(TokenType.LBRACE, "Expected '{' before else body");
       elseBranch = this.parseBlock();
     }
 
@@ -273,26 +307,16 @@ export class Parser {
   }
 
   parseWhileStatement() {
-    this.expect(TokenType.LPAREN, "Expected '(' after 'while'");
-    const condition = this.parseExpression();
-    this.expect(TokenType.RPAREN, "Expected ')' after while condition");
-
-    this.expect(TokenType.LBRACE, "Expected '{' before while body");
-    const body = this.parseBlock();
-
-    return new WhileStatement(condition, body);
-  }
-
-  parseReturnStatement() {
-    const value = this.parseExpression();
-    this.expect(TokenType.SEMICOLON, "Expected ';' after return value");
-    return new ReturnStatement(value);
-  }
-
-  parseExpressionStatement() {
-    const expr = this.parseExpression();
-    this.expect(TokenType.SEMICOLON, "Expected ';' after expression");
-    return new ExpressionStatement(expr);
+    try {
+      this.expect(TokenType.LPAREN, "Expected '(' after 'while'");
+      const condition = this.parseExpression();
+      this.expect(TokenType.RPAREN, "Expected ')' after while condition");
+      const body = this.parseBlock();
+      return new WhileStatement(condition, body);
+    } catch (error) {
+      console.error("Error in parseWhileStatement:", error);
+      throw error;
+    }
   }
 
   parseExpression() {
