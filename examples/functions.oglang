@@ -1,4 +1,3 @@
-// Temel matematik fonksiyonları
 fn add(x: number, y: number) -> number {
     return x + y;
 }
@@ -7,12 +6,10 @@ fn multiply(x: number, y: number) -> number {
     return x * y;
 }
 
-// İç içe fonksiyon çağrıları
 fn square(x: number) -> number {
     return multiply(x, x);
 }
 
-// Faktöriyel hesaplama (recursive)
 fn factorial(n: number) -> number {
     if (n <= 1) {
         return 1;
@@ -20,7 +17,6 @@ fn factorial(n: number) -> number {
     return n * factorial(n - 1);
 }
 
-// String işlemleri
 fn greet(name: string) -> string {
     return "Merhaba, " + name + "!";
 }
@@ -37,23 +33,19 @@ fn repeatString(str: string, times: number) -> string {
     return result;
 }
 
-// Birden fazla parametre tipi kullanan fonksiyon
 fn formatNumber(num: number, prefix: string) -> string {
     return prefix + " " + num;
 }
 
 fn main() -> number {
-    // Temel matematik işlemleri
     let sum = add(5, 3);
     let product = multiply(4, 6);
     let squared = square(5);
     let fact5 = factorial(5);
     
-    // String işlemleri
     let greeting = greet("Özer");
     let repeated = repeatString("Ha", 3);
     let formatted = formatNumber(42, "Sayı:");
     
-    // Sonuçları yazdır
-    return fact5;  // 120 döndürmeli
+    return fact5; 
 } 
