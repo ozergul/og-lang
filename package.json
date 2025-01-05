@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "OgLang - A Statically Typed Programming Language",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "run-calculator": "node runner.js examples/calculatorClass.oglang",
     "run-fibonacci": "node runner.js examples/fibonacci.oglang",
