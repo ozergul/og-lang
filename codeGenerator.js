@@ -178,22 +178,22 @@ function generateWhileStatement(stmt) {
 }
 
 function generateVariableDeclaration(decl) {
-  const keyword = decl.mutable || isReassigned(decl.name) ? 'let' : 'const';
-  let initValue = generateExpression(decl.init);
-  
-  // If it's a class instance creation, ensure proper initialization
-  if (decl.init && decl.init.type === 'NewExpression') {
-    const args = decl.init.arguments ? decl.init.arguments.map(generateExpression).join(", ") : "";
-    initValue = `new ${decl.init.className}(${args})`;
-  }
-  
-  return `${keyword} ${decl.name} = ${initValue};`;
+    // Always use let for now since we need mutability
+    let initValue = generateExpression(decl.init);
+    
+    // If it's a class instance creation, ensure proper initialization
+    if (decl.init && decl.init.type === 'NewExpression') {
+        const args = decl.init.arguments ? decl.init.arguments.map(generateExpression).join(", ") : "";
+        initValue = `new ${decl.init.className}(${args})`;
+    }
+    
+    return `let ${decl.name} = ${initValue};`;
 }
 
 // Check if a variable is reassigned later
 function isReassigned(varName) {
-    // Return false to respect the mutable flag in variable declarations
-    return false;
+    // Always return true to force let usage
+    return true;
 }
 
 function generateExpression(expr) {
