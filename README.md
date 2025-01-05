@@ -1,6 +1,27 @@
 # OgLang - A Modern Statically Typed Programming Language
 
+![OG Lang Playground](/screenshots/ss1.png)
+
 OgLang is a statically typed programming language that compiles to JavaScript. It features a simple and expressive syntax with strong type checking, making it ideal for building robust applications.
+
+## Online Playground
+
+Try OgLang directly in your browser using our modern playground:
+
+- **Modern UI** with Tailwind CSS and DaisyUI
+- **Real-time compilation** and output
+- **Built-in examples** to explore language features
+- **Syntax highlighting** with CodeMirror editor
+- **Dark theme** for better coding experience
+- **Full-width layout** for maximum coding space
+- **Responsive design** for various screen sizes
+
+To run the playground locally:
+
+```bash
+# Install and start the playground
+pnpm run playground
+```
 
 ## Features
 
@@ -139,11 +160,18 @@ oglang/
 │   ├── mathOperations.oglang   # Mathematical operations
 │   ├── arrayOperations.oglang  # Array manipulation examples
 │   └── textProcessing.oglang   # Text processing utilities
+├── playground/             # Online playground
+│   ├── public/            # Static files
+│   │   └── index.html     # Playground UI
+│   ├── src/              # Server code
+│   │   └── server.js     # Express server
+│   └── package.json      # Playground dependencies
 ├── src/                    # Compiler source code
 │   ├── lexer.js           # Tokenization of source code
 │   ├── parser.js          # AST generation
 │   ├── ast.js             # Abstract Syntax Tree definitions
 │   └── codeGenerator.js   # JavaScript code generation
+├── screenshots/           # Project screenshots
 ├── runner.js              # Program execution engine
 ├── Makefile              # Build and run scripts
 └── package.json          # Project configuration
