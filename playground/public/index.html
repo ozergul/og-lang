@@ -44,9 +44,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
         .CodeMirror {
             height: 100% !important;
@@ -67,6 +64,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            margin-left: 8px;
         }
         button:hover {
             background-color: #106ebe;
@@ -77,6 +75,18 @@
         .success {
             color: #69db7c;
         }
+        select {
+            background-color: #2d2d2d;
+            color: white;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        select:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
     </style>
 </head>
 <body>
@@ -84,35 +94,26 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const defaultCode = `// Write your OG Lang code here
-class Calculator {
-    // Properties must have type annotations
-    result: number;
-
-    add(x: number) -> number {
-        this.result = this.result + x;
-        return this.result;
-    }
-
-    multiply(x: number) -> number {
-        this.result = this.result * x;
-        return this.result;
-    }
-}
-
-function main() -> number {
-    let calc = new Calculator();
-    calc.result = 0;
-    let res = calc.add(5);
-    res = calc.multiply(2);
-    return res;
-}`;
-
         function Playground() {
-            const [code, setCode] = useState(defaultCode);
+            const [code, setCode] = useState('');
             const [output, setOutput] = useState('');
+            const [examples, setExamples] = useState([]);
             const editorRef = useRef(null);
             const cmRef = useRef(null);
+
+            useEffect(() => {
+                // Fetch examples when component mounts
+                fetch('/api/examples')
+                    .then(res => res.json())
+                    .then(data => {
+                        setExamples(data);
+                        // Load first example by default
+                        if (data.length > 0) {
+                            loadExample(data[0].path);
+                        }
+                    })
+                    .catch(console.error);
+            }, []);
 
             useEffect(() => {
                 if (editorRef.current && !cmRef.current) {
@@ -134,9 +135,25 @@ function main() -> number {
                 }
             }, []);
 
+            useEffect(() => {
+                if (cmRef.current && code !== cmRef.current.getValue()) {
+                    cmRef.current.setValue(code);
+                }
+            }, [code]);
+
+            const loadExample = async (path) => {
+                try {
+                    const response = await fetch(path);
+                    const data = await response.json();
+                    setCode(data.content);
+                } catch (error) {
+                    console.error('Error loading example:', error);
+                }
+            };
+
             const compileCode = async () => {
                 try {
-                    const response = await fetch('http://localhost:3000/compile', {
+                    const response = await fetch('/api/compile', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -152,11 +169,6 @@ function main() -> number {
                     }
 
                     const output = [
-                        '// Tokens:',
-                        JSON.stringify(result.tokens, null, 2),
-                        '\n// AST:',
-                        JSON.stringify(result.ast, null, 2),
-                        '\n// Compiled JavaScript:',
                         result.compiledCode
                     ].join('\n');
 
@@ -170,7 +182,19 @@ function main() -> number {
                 <div className="container">
                     <div className="editor-container">
                         <div className="panel-header">
-                            <span>OG Lang Editor</span>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span>OG Lang Editor</span>
+                                <select 
+                                    onChange={(e) => loadExample(e.target.value)}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    {examples.map((example, index) => (
+                                        <option key={index} value={example.path}>
+                                            {example.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <button onClick={compileCode}>Compile</button>
                         </div>
                         <div ref={editorRef} style={{ flex: 1 }} />
