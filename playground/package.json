@@ -3,6 +3,10 @@
     "version": "1.0.0",
     "description": "OG Lang Online Playground",
     "type": "module",
+    "engines": {
+        "node": ">=22.7.0",
+        "pnpm": ">=8.0.0"
+    },
     "scripts": {
         "start": "node src/server.js"
     },
