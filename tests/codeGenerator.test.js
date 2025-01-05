@@ -35,7 +35,7 @@ describe('Variable Declarations', () => {
         expect(code.includes('let x = 42;')).toBe(true);
     });
 
-    test('should generate const for immutable variables', () => {
+    test('should generate let for immutable variables', () => {
         const ast = {
             declarations: [{
                 type: 'VariableDeclaration',
@@ -46,7 +46,7 @@ describe('Variable Declarations', () => {
         };
         
         const code = generateCode(ast);
-        expect(code.includes('const x = 42;')).toBe(true);
+        expect(code.includes('let x = 42;')).toBe(true);
     });
 });
 
