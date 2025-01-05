@@ -13,7 +13,10 @@
     "run-functions": "node runner.js examples/functions.oglang",
     "run-examples": "make run-examples",
     "clean": "make clean",
-    "test": "node tests/codeGenerator.test.js"
+    "test": "node tests/codeGenerator.test.js",
+    "playground:install": "cd playground && pnpm install",
+    "playground:start": "cd playground && pnpm start",
+    "playground": "pnpm run playground:install && pnpm run playground:start"
   },
   "keywords": [
     "programming-language",
