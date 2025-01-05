@@ -65,9 +65,13 @@
 
         function EditorPanel({ editorRef }) {
             return (
-                <div className="card bg-base-200 shadow-xl h-full">
-                    <div className="card-body p-0">
-                        <div ref={editorRef} className="h-full" />
+                <div className="card bg-base-200 shadow-xl h-full flex flex-col">
+                    <div className="card-body p-2">
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="card-title text-sm opacity-50">Editor</h2>
+                            <div className="text-xs opacity-50">OG Lang</div>
+                        </div>
+                        <div ref={editorRef} className="flex-1 overflow-hidden" style={{ minHeight: "calc(100vh - 180px)" }} />
                     </div>
                 </div>
             );
@@ -75,10 +79,13 @@
 
         function OutputPanel({ output }) {
             return (
-                <div className="card bg-base-200 shadow-xl h-full">
-                    <div className="card-body">
-                        <h2 className="card-title">Output</h2>
-                        <pre className="bg-base-300 rounded-lg p-4 overflow-auto font-mono text-sm">
+                <div className="card bg-base-200 shadow-xl h-full flex flex-col">
+                    <div className="card-body p-2">
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="card-title text-sm opacity-50">Output</h2>
+                            <div className="text-xs opacity-50">Compiled Result</div>
+                        </div>
+                        <pre className="bg-base-300 rounded-lg p-4 overflow-auto font-mono text-sm flex-1" style={{ minHeight: "calc(100vh - 180px)" }}>
                             {output || 'Compiled code will appear here...'}
                         </pre>
                     </div>
@@ -119,11 +126,25 @@
                         tabSize: 4,
                         indentUnit: 4,
                         lineWrapping: true,
+                        viewportMargin: Infinity,
+                        height: "100%"
                     });
 
                     cmRef.current.on('change', (cm) => {
                         setCode(cm.getValue());
                     });
+
+                    // Adjust CodeMirror height
+                    const adjustHeight = () => {
+                        const editor = editorRef.current.querySelector('.CodeMirror');
+                        if (editor) {
+                            editor.style.height = '100%';
+                        }
+                    };
+
+                    adjustHeight();
+                    window.addEventListener('resize', adjustHeight);
+                    return () => window.removeEventListener('resize', adjustHeight);
                 }
             }, []);
 
@@ -168,16 +189,18 @@
 
             return (
                 <div className="min-h-screen bg-base-100 flex flex-col">
-                    <Navbar 
-                        selectedExample={selectedExample}
-                        examples={examples}
-                        onExampleChange={(path) => {
-                            setSelectedExample(path);
-                            loadExample(path);
-                        }}
-                        onCompile={compileCode}
-                    />
-                    <div className="flex-1 p-4 grid grid-cols-2 gap-4">
+                    <div className="sticky top-0 z-50 shadow-lg">
+                        <Navbar 
+                            selectedExample={selectedExample}
+                            examples={examples}
+                            onExampleChange={(path) => {
+                                setSelectedExample(path);
+                                loadExample(path);
+                            }}
+                            onCompile={compileCode}
+                        />
+                    </div>
+                    <div className="flex-1 px-2 grid grid-cols-2 gap-2">
                         <EditorPanel editorRef={editorRef} />
                         <OutputPanel output={output} />
                     </div>
